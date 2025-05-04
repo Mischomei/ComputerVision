@@ -31,7 +31,7 @@ class ImageProcessor:
         print(f"Fehler: {mean_error/len(objPoints)}")
 
 
-    def find_marker(self, image):
+    def find_marker(self, image) # Zwischenzeitliche Markererkennung
         img = image
 
         #Kantenerkennung // Edge Detection
@@ -45,7 +45,7 @@ class ImageProcessor:
 
         return cv.minAreaRect(c)
 
-    def draw_marker(self, marker, image):
+    def draw_marker(self, marker, image): # Zwischenzeitliche Zeichnung von Markern
         box = cv.BoxPoints(marker) if imutils.is_cv2() else cv.boxPoints(marker)
         box = np.int32(box)
         cv.drawContours(image, [box], -1, (0, 255, 0), 2)
