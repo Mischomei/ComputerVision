@@ -3,6 +3,9 @@ import numpy as np
 import imutils
 import os
 
+from cv2 import imshow
+
+
 class ImageProcessor:
     def __init__(self):
         pass
@@ -31,18 +34,19 @@ class ImageProcessor:
         print(f"Fehler: {mean_error/len(objPoints)}")
 
 
-    def find_marker(self, image) # Zwischenzeitliche Markererkennung
+    def find_marker_bycontours(self, image): # Zwischenzeitliche Markererkennung
         img = image
 
         #Kantenerkennung // Edge Detection
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         gray_blur = cv.GaussianBlur(gray, (5, 5), 0)
-        edges = cv.Canny(gray_blur, 50, 150)
+        ret, thresh = cv.threshold(gray_blur, 110, 255, cv.THRESH_BINARY)
+        edges = cv.Canny(thresh, 25, 150, apertureSize=3)
 
-        contours = cv.findContours(edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        #Konturenerkennung // Contour Detection
+        contours = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         contours = imutils.grab_contours(contours)
         c = max(contours, key=cv.contourArea)
-
         return cv.minAreaRect(c)
 
     def draw_marker(self, marker, image): # Zwischenzeitliche Zeichnung von Markern
