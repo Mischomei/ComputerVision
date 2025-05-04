@@ -16,5 +16,8 @@ Project1/data
 Project1/main.py
 
 #Extra not needed fluff
-/.idea/
-/anaconda_projects/
+idea/
+anaconda_projects/
+
+#venv
+venv
