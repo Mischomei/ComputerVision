@@ -1,0 +1,20 @@
+
+
+# Pycharm project files
+.idea
+*.iml
+out
+gen
+
+# Images for testing
+Project1/images/
+
+#Settings for cameras
+Project1/data
+
+#Main file
+Project1/main.py
+
+#Extra not needed fluff
+/.idea/
+/anaconda_projects/
