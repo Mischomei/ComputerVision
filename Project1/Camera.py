@@ -3,6 +3,7 @@ import cv2 as cv
 import numpy as np
 import os
 import json
+import time
 
 # Kamera Klasse
 class Camera:
@@ -107,3 +108,16 @@ class Camera:
 
         print("---Kamera Parameter gespeichert---")
 
+    def start_stream(self, camnum = 0, save_folder = "images/stream"):
+        cap = cv.VideoCapture(camnum)
+        while True:
+            ret, frame = cap.read()
+            cv.imshow("frame", frame)
+            if cv.waitKey(1) & 0xFF == ord('q'):
+                print("---Stream beendet---")
+                break
+            if cv.waitKey(1) & 0xFF == ord('s'):
+                cv.imwrite(os.path.join(save_folder, f"stream_{int(time.time())}.jpg"), frame)
+                print("---Frame gespeichert---")
+        cap.release()
+        cv.destroyAllWindows()
