@@ -21,3 +21,5 @@ anaconda_projects/
 
 #venv
 venv
+
+__pychache__
