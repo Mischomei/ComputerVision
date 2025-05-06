@@ -66,15 +66,5 @@ class ImageProcessor:
         cv.waitKey(0)
 
 
-    def start_stream(self, camnum = 0, save_folder = "images/stream"):
-        cap = cv.VideoCapture(camnum)
-        while True:
-            ret, frame = cap.read()
-            cv.imshow("frame", frame)
-            if cv.waitKey(1) & 0xFF == ord('q'):
-                break
-            if cv.waitKey(1) & 0xFF == ord('s'):
-                cv.imwrite(os.path.join(save_folder, f"stream_{int(time.time())}.jpg"), frame)
-        cap.release()
-        cv.destroyAllWindows()
+
 
