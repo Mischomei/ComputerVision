@@ -108,6 +108,7 @@ class Camera:
 
         print("---Kamera Parameter gespeichert---")
 
+    #Livevideo der Kamera mit möglichkeit Photos zu machen // Livevideo of camera with the possibility to take photos
     def start_stream(self, camnum = 0, save_folder = "images/stream"):
         cap = cv.VideoCapture(camnum)
         while True:
