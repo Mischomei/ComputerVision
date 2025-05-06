@@ -1,3 +1,5 @@
+import time
+
 import cv2 as cv
 import numpy as np
 import imutils
@@ -40,13 +42,19 @@ class ImageProcessor:
         #Kantenerkennung // Edge Detection
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         gray_blur = cv.GaussianBlur(gray, (5, 5), 0)
-        ret, thresh = cv.threshold(gray_blur, 110, 255, cv.THRESH_BINARY)
-        edges = cv.Canny(thresh, 25, 150, apertureSize=3)
+        ret, thresh = cv.threshold(gray_blur, 100, 255, cv.THRESH_BINARY)
+        edges = cv.Canny(thresh, 25, 175)
 
         #Konturenerkennung // Contour Detection
         contours = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         contours = imutils.grab_contours(contours)
+
         c = max(contours, key=cv.contourArea)
+        imgcopy = img.copy()
+        cv.drawContours(imgcopy, [c], -1, (0, 255, 0), 2)
+        cv.imshow("imagecopy", imgcopy)
+        cv.waitKey(0)
+
         return cv.minAreaRect(c)
 
     def draw_marker(self, marker, image): # Zwischenzeitliche Zeichnung von Markern
@@ -56,3 +64,17 @@ class ImageProcessor:
 
         cv.imshow("image", image)
         cv.waitKey(0)
+
+
+    def start_stream(self, camnum = 0, save_folder = "images/stream"):
+        cap = cv.VideoCapture(camnum)
+        while True:
+            ret, frame = cap.read()
+            cv.imshow("frame", frame)
+            if cv.waitKey(1) & 0xFF == ord('q'):
+                break
+            if cv.waitKey(1) & 0xFF == ord('s'):
+                cv.imwrite(os.path.join(save_folder, f"stream_{int(time.time())}.jpg"), frame)
+        cap.release()
+        cv.destroyAllWindows()
+
