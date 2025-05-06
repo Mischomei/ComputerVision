@@ -122,3 +122,4 @@ class Camera:
                 print("---Frame gespeichert---")
         cap.release()
         cv.destroyAllWindows()
+
