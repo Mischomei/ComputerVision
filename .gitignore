@@ -8,6 +8,7 @@ gen
 
 # Images for testing
 Project1/images/
+Project1/__pychache__
 
 #Settings for cameras
 Project1/data
