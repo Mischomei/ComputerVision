@@ -62,7 +62,7 @@ class ImageProcessor:
         g_blur = cv.GaussianBlur(g, (5, 5), 0)
         r_blur = cv.GaussianBlur(r, (5, 5), 0)
 
-        #Thresholding
+        #Thresholding und Maske für Kantenerkennung
         b_thresh = cv.threshold(b_blur, 95, 255, cv.THRESH_BINARY_INV)[1]
         g_thresh = cv.threshold(g_blur, 95, 255, cv.THRESH_BINARY_INV)[1]
         r_thresh = cv.threshold(r_blur, 95, 255, cv.THRESH_BINARY_INV)[1]
@@ -75,21 +75,7 @@ class ImageProcessor:
         edgesthresh = cv.Canny(combthresh, 25, 150, apertureSize=3)
         self.showimg(edgesthresh, "edgesthresh")
         self.showimg(self.lines(edgesthresh, img_copy), "edgesthreshlines")
-        #Finde edges
-        b_edges = cv.Canny(b_blur, 25, 100, apertureSize=3)
-        g_edges = cv.Canny(g_blur, 25, 100, apertureSize=3)
-        r_edges = cv.Canny(r_blur, 25, 100, apertureSize=3)
-        combined = cv.bitwise_or(b_edges, g_edges, r_edges)
-        self.showimg(combined, "combined")
-        edgemask = masks[0]
-        edgemask = cv.morphologyEx(edgemask, cv.MORPH_OPEN, None, iterations=5)
-        combined = cv.bitwise_and(combined, combined, mask=edgemask)
-        edges = cv.morphologyEx(combined, cv.MORPH_DILATE, (3,3), iterations=2)
 
-        self.showimg(edges, "combinde")
-        self.showimg(self.lines(edges, img_copy), "Lines")
-        cons = cv.findContours(combined, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        self.lines(cons, img_copy)
         return img_copy, b, g, r
 
     def lines(self, edge, img):

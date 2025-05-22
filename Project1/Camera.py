@@ -85,8 +85,6 @@ class Camera:
             self.resolution = data["resolution"]
             self.cameraMatrix = np.array(data["cameraMatrix"])
             self.dist = np.array(data["dist"])
-            self.rvecs = np.array(data["rvecs"])
-            self.tvecs = np.array(data["tvecs"])
             print(data)
         print("---Kamera Parameter geladen---")
 
@@ -97,8 +95,6 @@ class Camera:
             "resolution": self.resolution,
             "cameraMatrix": self.cameraMatrix.tolist(),
             "dist": self.dist.tolist(),
-            "rvecs": np.array(self.rvecs).tolist(),
-            "tvecs": np.array(self.tvecs).tolist()
         }
 
         json_obj = json.dumps(settings, indent=4)
