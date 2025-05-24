@@ -71,7 +71,7 @@ class ImageProcessor:
         #poly = cv.approxPolyDP(c, 0.02 * cv.arcLength(c, True), True)
         poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]),ensure_convex=True)
         print(poly)
-        cv.drawContours(img, [poly], 0, (0, 0, 255), 5)
+        #cv.drawContours(img, [poly], 0, (0, 0, 255), 5)
         for index, point in enumerate(poly[0].astype(int)):
             cv.circle(img,(point[0], point[1]), 5, (0, 0, 255), -1)
             cv.putText(img, str(index), (point[0], point[1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
@@ -107,6 +107,8 @@ class ImageProcessor:
             # Aus Ecken Kanten machen
             pass
 
+    def depthestimatetest(self, img, realsize, imgsize, f, sensor):
+        return ()
 
     def refine_edges(self):
         pass

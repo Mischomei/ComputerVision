@@ -1,6 +1,7 @@
 from Project1.Camera import Camera
 import cv2 as cv
 import numpy as np
+import threading
 
 class StereoCamera(Camera, Camera):
     def __init__(self, left_camera, right_camera):
@@ -15,3 +16,7 @@ class StereoCamera(Camera, Camera):
         retStereo, newCameraMatrixL, distL, newCameraMatrixR, distR, R, T, E, F = cv.stereoCalibrate(self.left_camera.objPoints, self.left_camera.imgPoints, self.right_camera.imgPoints, self.left_camera.cameraMatrix, self.left_camera.dist, self.right_camera.cameraMatrix, self.right_camera.dist, res, criteria=criteria_stereo, flags=flags)
 
         #Stereo Rektifizierung, Unverzerrung // Stereo rectification, undistortion
+
+
+    def stereo_stream(self):
+        pass
