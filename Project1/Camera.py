@@ -11,11 +11,14 @@ class Camera:
     f = None # Focal length
     resolution = (0, 0) # Auflösung // Resolution
     cameraMatrix, dist, rvecs, tvecs = None, None, None ,None # Kameramatrix, Verzerrungsmatrix, Rotationsvektoren, Verschiebungsvektoren // Camera Matrix, Distortion Matrix, Rotation Vectors, Translation Vectors
+    objPoints, imgPoints = None, None
+    newCameramatrix = None
 
     def __init__(self, resolution = (0,0), data=None):
         self.resolution = resolution
         if data:
             self.load_settings(data)
+
 
     def calibrate(self, folder, res, checkboardSize, calibfilesdtype="jpg"):
         # Kriterien für Terminierung des Kalibrierungvorgangs // termination criteria
@@ -55,13 +58,18 @@ class Camera:
         # Kalibrierung // Calibration
 
         ret, cameraMatrix, dist, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, res, None, None)
+        height, width, channels = img.shape
+        newCameramatrix, roi = cv.getOptimalNewCameraMatrix(cameraMatrix, dist, (width, height), 1, (width, height))
 
         if ret:
             self.cameraMatrix = cameraMatrix
+            self.newCameramatrix = newCameramatrix
             self.dist = dist
             self.rvecs = rvecs
             self.tvecs = tvecs
             self.f = cameraMatrix[0, 0]
+            self.imgPoints = imgPoints
+            self.objPoints = objPoints
             print(f"---Kamera kalibriert: {ret}---")
         else:
             print(f"---Kalibrierung fehlgeschlagen---")

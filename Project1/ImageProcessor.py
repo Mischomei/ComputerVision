@@ -11,6 +11,7 @@ from cv2 import imshow
 
 
 class ImageProcessor:
+
     def __init__(self):
         pass
 
@@ -19,9 +20,9 @@ class ImageProcessor:
         h,w = img.shape[:2]
 
         #Optimisierung der Kameramatrix passend zur Auflösung des Bildes
-        newCameraMatrix, roi = cv.getOptimalNewCameraMatrix(camera.cameraMatrix, camera.dist, (w,h), 1, (w, h))
+        newCameraMatrix, roi = cv.getOptimalNewCameraMatrix(camera.newCameramatrix, camera.dist, (w,h), 1, (w, h))
         #Unverzerrung
-        dest = cv.undistort(img, camera.cameraMatrix, camera.dist, None, newCameraMatrix)
+        dest = cv.undistort(img, camera.newCameramatrix, camera.dist, None, newCameraMatrix)
         x, y, w, h = roi
         dest = dest[y:y+h, x:x+w]
         if destFolder:
@@ -44,20 +45,23 @@ class ImageProcessor:
         blank = np.zeros(img.shape[:2], dtype="uint8")
 
         #Gaussian Blur
-        b_blur = cv.GaussianBlur(b, (5, 5), 0)
-        g_blur = cv.GaussianBlur(g, (5, 5), 0)
-        r_blur = cv.GaussianBlur(r, (5, 5), 0)
+        b_blur = cv.GaussianBlur(b, (3, 3), 0)
+        g_blur = cv.GaussianBlur(g, (3, 3), 0)
+        r_blur = cv.GaussianBlur(r, (3, 3), 0)
 
-        #Thresholding und Maske für Kantenerkennung
-        b_thresh = cv.threshold(b_blur, 95, 255, cv.THRESH_BINARY_INV)[1]
-        g_thresh = cv.threshold(g_blur, 95, 255, cv.THRESH_BINARY_INV)[1]
-        r_thresh = cv.threshold(r_blur, 95, 255, cv.THRESH_BINARY_INV)[1]
-        combthresh = cv.bitwise_or(b_thresh, g_thresh, r_thresh)
+        b_edges = cv.Canny(b_blur, 25, 150, apertureSize=3)
+        g_edges = cv.Canny(g_blur, 25, 150, apertureSize=3)
+        r_edges = cv.Canny(r_blur, 25, 150, apertureSize=3)
+
+        combthresh = cv.bitwise_or(b_edges, g_edges, r_edges)
         threshmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, (20, 20), iterations=2)
-        threshmask = cv.morphologyEx(threshmask, cv.MORPH_CLOSE, None, iterations=10)
+        threshmask = cv.morphologyEx(threshmask, cv.MORPH_DILATE, None, iterations=10)
         threshmask = cv.morphologyEx(threshmask, cv.MORPH_OPEN, (20, 20), iterations=1)
+        self.showimg(combthresh, "combthresh")
+        self.showimg(threshmask, "threshmask")
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=threshmask)
         edgesthresh = cv.Canny(combthresh, 25, 150, apertureSize=3)
+        self.showimg(edgesthresh, "edgesthresh")
         self.showimg(self.lines(edgesthresh, img_copy), "edgesthreshlines")
 
         return img_copy, b, g, r
@@ -91,11 +95,12 @@ class ImageProcessor:
         img_copy = img.copy()
         return img_copy[cxs:cxe, cys:cye]
 
-    def color_mask(self, img, lower, upper, preprocess=False):
+    def color_mask(self, img, lower, upper):
         img_copy = img.copy()
         img_copy = cv.cvtColor(img_copy, cv.COLOR_BGR2HSV)
         mask = cv.inRange(img_copy, lower, upper)
         mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
+        self.showimg(mask, "mask")
         return mask
 
     def cornersto3d(self, corners):
