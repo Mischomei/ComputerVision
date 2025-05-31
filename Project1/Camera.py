@@ -91,7 +91,8 @@ class Camera:
             data = json.load(json_file)
             self.f = data["f"]
             self.resolution = data["resolution"]
-            self.cameraMatrix = np.array(data["cameraMatrix"])
+            self.cameraMatrix = np.asarray(data["cameraMatrix"])
+            self.newCameramatrix = np.asarray(data["newCameramatrix"])
             self.dist = np.array(data["dist"])
             print(data)
         print("---Kamera Parameter geladen---")
@@ -102,6 +103,7 @@ class Camera:
             "f": self.f,
             "resolution": self.resolution,
             "cameraMatrix": self.cameraMatrix.tolist(),
+            "newCameramatrix": self.newCameramatrix.tolist(),
             "dist": self.dist.tolist(),
         }
 

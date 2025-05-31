@@ -1,3 +1,5 @@
+import os
+
 from Project1.Camera import Camera
 import cv2 as cv
 import numpy as np
@@ -37,16 +39,25 @@ class StereoCamera(Camera):
         else:
             print("Stereo-Kalibrierung fehlgeschlagen")
 
-        #Speicherung der ganzen Parameter
-        cv_file = cv.FileStorage("stereoMap.xml", cv.FILE_STORAGE_WRITE)
-        cv_file.write("stereoMapL_x", stereomapL[0])
-        cv_file.write("stereoMapL_y", stereomapL[1])
-        cv_file.write("stereoMapR_x", stereomapR[0])
-        cv_file.write("stereoMapR_y", stereomapR[1])
+    def save_map(self, dic=""):
+        # Speicherung der ganzen Parameter
+        cv_file = cv.FileStorage(os.path.join(dic,"stereoMap.xml"), cv.FILE_STORAGE_WRITE)
+        cv_file.write("stereoMapL_x", self.stereomapL_x)
+        cv_file.write("stereoMapL_y", self.stereomapL_y)
+        cv_file.write("stereoMapR_x", self.stereomapR_x)
+        cv_file.write("stereoMapR_y", self.stereomapR_y)
         cv_file.release()
 
-    def read_map(self):
-        pass
+    def read_map(self, dic=""):
+        cv_file = cv.FileStorage()
+        cv_file.open(os.path.join(dic,"stereoMap.xml"), cv.FILE_STORAGE_READ)
+
+        self.stereomapL_x = cv_file.getNode("stereoMapL_x").mat()
+        self.stereomapL_y = cv_file.getNode("stereoMapL_y").mat()
+        self.stereomapR_x = cv_file.getNode("stereoMapR_x").mat()
+        self.stereomapR_y = cv_file.getNode("stereoMapR_y").mat()
+        cv_file.release()
+
 
     def stereo_stream(self):
         pass

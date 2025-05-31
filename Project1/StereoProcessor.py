@@ -1,22 +1,17 @@
 from numpy.f2py.auxfuncs import throw_error
-
-import ImageProcessor
 import StereoCamera
 import cv2 as cv
 import numpy as np
 
 
-class StereoProcessor(ImageProcessor.ImageProcessor):
-
-    def __init__(self):
-        super().__init__()
+class StereoProcessor():
 
     def undistort_rectify(self, frameL, frameR, stereocam):
         undistorted_left = cv.remap(frameL, stereocam.stereomapL_x, stereocam.stereomapL_y, cv.INTER_LANCZOS4, cv.BORDER_CONSTANT, 0)
         undistorted_right = cv.remap(frameR, stereocam.stereomapR_x, stereocam.stereomapR_y, cv.INTER_LANCZOS4, cv.BORDER_CONSTANT, 0)
         return undistorted_left, undistorted_right
 
-    def find_depth(self, frame_left, frame_right, stereocam):
+    def find_depth(self, pr, pl, frame_left, frame_right, stereocam):
 
         #f von mm zu pixel umrechnen
         heightr, widthr, depthr = frame_right.shape
@@ -27,8 +22,10 @@ class StereoProcessor(ImageProcessor.ImageProcessor):
         else:
             throw_error("width of left and right image do not match")
 
-        xr = stereocam.right_camera.objPoints[0]
-        xl = stereocam.left_camera.objPoints[0]
+        #xr = stereocam.right_camera.objPoints[0]
+        #xl = stereocam.left_camera.objPoints[0]
+        xr = pr[0]
+        xl = pl[0]
 
         disp = xl - xr
         zD = (stereocam.baseline*f_pixel) / disp

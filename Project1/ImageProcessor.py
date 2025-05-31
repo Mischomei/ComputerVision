@@ -20,9 +20,9 @@ class ImageProcessor:
         h,w = img.shape[:2]
 
         #Optimisierung der Kameramatrix passend zur Auflösung des Bildes
-        newCameraMatrix, roi = cv.getOptimalNewCameraMatrix(camera.newCameramatrix, camera.dist, (w,h), 1, (w, h))
+        newcameramatrix, roi = cv.getOptimalNewCameraMatrix(camera.newCameramatrix, camera.dist, (w,h), 1, (w, h))
         #Unverzerrung
-        dest = cv.undistort(img, camera.newCameramatrix, camera.dist, None, newCameraMatrix)
+        dest = cv.undistort(img, camera.newCameramatrix, camera.dist, None, newcameramatrix)
         x, y, w, h = roi
         dest = dest[y:y+h, x:x+w]
         if destFolder:
@@ -44,25 +44,31 @@ class ImageProcessor:
         b, g, r = cv.split(img_copy)
         blank = np.zeros(img.shape[:2], dtype="uint8")
 
+
         #Gaussian Blur
         b_blur = cv.GaussianBlur(b, (3, 3), 0)
         g_blur = cv.GaussianBlur(g, (3, 3), 0)
         r_blur = cv.GaussianBlur(r, (3, 3), 0)
 
-        b_edges = cv.Canny(b_blur, 25, 150, apertureSize=3)
-        g_edges = cv.Canny(g_blur, 25, 150, apertureSize=3)
-        r_edges = cv.Canny(r_blur, 25, 150, apertureSize=3)
+        b_edges = cv.Canny(b_blur, 25, 125, apertureSize=3)
+        g_edges = cv.Canny(g_blur, 25, 125, apertureSize=3)
+        r_edges = cv.Canny(r_blur, 25, 125, apertureSize=3)
 
         combthresh = cv.bitwise_or(b_edges, g_edges, r_edges)
         threshmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, (20, 20), iterations=2)
-        threshmask = cv.morphologyEx(threshmask, cv.MORPH_DILATE, None, iterations=10)
-        threshmask = cv.morphologyEx(threshmask, cv.MORPH_OPEN, (20, 20), iterations=1)
+        threshmask = cv.morphologyEx(threshmask, cv.MORPH_DILATE, None, iterations=2)
+        threshmask = cv.morphologyEx(threshmask, cv.MORPH_OPEN, (20, 20), iterations=2)
+
+        invmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, None, iterations=10)
+        invmask = cv.morphologyEx(invmask, cv.MORPH_OPEN, None, iterations=1)
+        invmask = cv.bitwise_not(invmask)
+
         self.showimg(combthresh, "combthresh")
         self.showimg(threshmask, "threshmask")
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=threshmask)
-        edgesthresh = cv.Canny(combthresh, 25, 150, apertureSize=3)
-        self.showimg(edgesthresh, "edgesthresh")
-        self.showimg(self.lines(edgesthresh, img_copy), "edgesthreshlines")
+        combthresh = cv.bitwise_and(combthresh, combthresh, mask=invmask)
+        self.showimg(combthresh, "edgesthresh")
+        self.showimg(self.lines(combthresh, img_copy), "edgesthreshlines")
 
         return img_copy, b, g, r
 
@@ -75,7 +81,7 @@ class ImageProcessor:
         #poly = cv.approxPolyDP(c, 0.02 * cv.arcLength(c, True), True)
         poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]),ensure_convex=True)
         print(poly)
-        #cv.drawContours(img, [poly], 0, (0, 0, 255), 5)
+        cv.drawContours(img, [poly], 0, (0, 0, 255), 5)
         for index, point in enumerate(poly[0].astype(int)):
             cv.circle(img,(point[0], point[1]), 5, (0, 0, 255), -1)
             cv.putText(img, str(index), (point[0], point[1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
@@ -100,6 +106,7 @@ class ImageProcessor:
         img_copy = cv.cvtColor(img_copy, cv.COLOR_BGR2HSV)
         mask = cv.inRange(img_copy, lower, upper)
         mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
+        mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
         self.showimg(mask, "mask")
         return mask
 
