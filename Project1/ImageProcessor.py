@@ -55,8 +55,10 @@ class ImageProcessor:
         r_edges = cv.Canny(r_blur, 25, 125, apertureSize=3)
 
         combthresh = cv.bitwise_or(b_edges, g_edges, r_edges)
+        combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, (5, 5), iterations=3)
+
         threshmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, (20, 20), iterations=2)
-        threshmask = cv.morphologyEx(threshmask, cv.MORPH_DILATE, None, iterations=2)
+        threshmask = cv.morphologyEx(threshmask, cv.MORPH_DILATE, None, iterations=5)
         threshmask = cv.morphologyEx(threshmask, cv.MORPH_OPEN, (20, 20), iterations=2)
 
         invmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, None, iterations=10)
@@ -68,9 +70,11 @@ class ImageProcessor:
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=threshmask)
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=invmask)
         self.showimg(combthresh, "edgesthresh")
-        self.showimg(self.lines(combthresh, img_copy), "edgesthreshlines")
 
-        return img_copy, b, g, r
+        lines, point = self.lines(combthresh, img_copy)
+        self.showimg(lines, "edgesthreshlines")
+
+        return img_copy, point
 
     def lines(self, edge, img):
 
@@ -85,7 +89,7 @@ class ImageProcessor:
         for index, point in enumerate(poly[0].astype(int)):
             cv.circle(img,(point[0], point[1]), 5, (0, 0, 255), -1)
             cv.putText(img, str(index), (point[0], point[1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        return img
+        return img, np.asarray(poly[0].astype(int))[0]
 
     #Drehen vom Bild
     def rotate(self, img, angle=90):
@@ -130,16 +134,6 @@ class ImageProcessor:
 
     def calc_coords_from_corners(self):
         pass
-
-
-    def linesintersect(self, line1, line2):#
-        intersections = list()
-        x1, y1, x2, y2 = line1
-        x3, y3, x4, y4 = line2
-        line1_params = poly.fit((x1, x2), (y1, y2), 1)
-        line2_params = poly.fit((x3, x4), (y3, y4), 1)
-        print(line1_params)
-        print(line2_params)
 
     #Anzeigen des Bildes
     def showimg(self, img, name):

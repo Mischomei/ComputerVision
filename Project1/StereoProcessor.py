@@ -20,14 +20,12 @@ class StereoProcessor():
         if widthl == widthr:
             f_pixel = (widthr * 0.5) / np.tan(stereocam.alpha * 0.5 * np.pi / 180)
         else:
-            throw_error("width of left and right image do not match")
+            f_pixel = stereocam.left_camera.f
 
-        #xr = stereocam.right_camera.objPoints[0]
-        #xl = stereocam.left_camera.objPoints[0]
         xr = pr[0]
         xl = pl[0]
 
         disp = xl - xr
         zD = (stereocam.baseline*f_pixel) / disp
-
+        print(f"Distanz Kamera-Punkt: {abs(zD)}")
         return abs(zD)
