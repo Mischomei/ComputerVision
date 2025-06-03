@@ -1,5 +1,3 @@
-import Camera
-import ImageProcessor
 from picamera2 import Picamera2
 import cv2 as cv
 import os
@@ -19,8 +17,8 @@ calibration_camera_2 = "example_data/calibration_left"
 calibration_camera_1 = "example_data/calibration_right"
 container_images_camera_2 = "example_data/container_left"
 container_images_camera_1 = "example_data/container_right"
-save_path_camera_2 = "example_data/container_left"
-save_path_camera_1 = "example_data/container_right"
+save_path_camera_2 = "../data/example_data/container_left"
+save_path_camera_1 = "../data/example_data/container_right"
 
 
 if __name__ == "__main__":

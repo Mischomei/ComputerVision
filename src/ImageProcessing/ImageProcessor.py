@@ -65,11 +65,8 @@ class ImageProcessor:
         invmask = cv.morphologyEx(invmask, cv.MORPH_OPEN, None, iterations=1)
         invmask = cv.bitwise_not(invmask)
 
-        self.showimg(combthresh, "combthresh")
-        self.showimg(threshmask, "threshmask")
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=threshmask)
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=invmask)
-        self.showimg(combthresh, "edgesthresh")
 
         lines, point = self.lines(combthresh, img_copy)
         self.showimg(lines, "edgesthreshlines")
@@ -111,7 +108,6 @@ class ImageProcessor:
         mask = cv.inRange(img_copy, lower, upper)
         mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
         mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
-        self.showimg(mask, "mask")
         return mask
 
     def cornersto3d(self, corners):

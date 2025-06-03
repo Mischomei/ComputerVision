@@ -50,8 +50,6 @@ class Camera:
                 imgPoints.append(corners2)
 
                 cv.drawChessboardCorners(img, checkboardSize, corners2, ret)
-                cv.imshow("Img", img)
-                cv.waitKey(1000)
 
         cv.destroyAllWindows()
 
@@ -85,6 +83,7 @@ class Camera:
         print(f"---Rotation Vectors:---\n {self.rvecs}")
         print(f"---Translation Vectors:---\n {self.tvecs}")
 
+    # TODO Fix Settings Saving and Loading
     # Gespeicherte Einstellungen laden // Load saved settings
     def load_settings(self, data_folder, filename="camera_settings.json"):
         with open(os.path.join(data_folder, filename)) as json_file:

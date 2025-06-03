@@ -1,9 +1,8 @@
 import os
 
-from Project1.Camera import Camera
+from src.ImageProcessing.Camera.Camera import Camera
 import cv2 as cv
-import numpy as np
-import threading
+
 
 class StereoCamera(Camera):
     stereomapL_x, stereomapL_y = None, None
@@ -39,6 +38,8 @@ class StereoCamera(Camera):
         else:
             print("Stereo-Kalibrierung fehlgeschlagen")
 
+
+    #TODO Fix Settings Saving and Loading
     def save_map(self, dic=""):
         # Speicherung der ganzen Parameter
         cv_file = cv.FileStorage(os.path.join(dic,"stereoMap.xml"), cv.FILE_STORAGE_WRITE)

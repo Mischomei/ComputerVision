@@ -1,5 +1,3 @@
-from numpy.f2py.auxfuncs import throw_error
-import StereoCamera
 import cv2 as cv
 import numpy as np
 

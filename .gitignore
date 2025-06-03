@@ -6,20 +6,25 @@
 out
 gen
 
-# Images for testing
-Project1/images/
+#Settings for cameras and images for testing
+data/images
+data/motox40
+data/pi1
+data/pi2
+data/stereo
+data/webcam1
+data/info.txt
 
-#Settings for cameras
-Project1/data
+#Test files
+tests/test.py
+tests/stereotest.py
+tests/main.py
 
-#Main file
-Project1/test.py
-
-#Extra not needed fluff
+#venv stuff
 idea/
 anaconda_projects/
 
 #venv
 venv
 
-__pychache__
+src/NoiseRemoval.py
