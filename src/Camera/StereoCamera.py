@@ -1,6 +1,6 @@
 import os
 
-from src.ImageProcessing.Camera.Camera import Camera
+from src.Camera.Camera import Camera
 import cv2 as cv
 
 
