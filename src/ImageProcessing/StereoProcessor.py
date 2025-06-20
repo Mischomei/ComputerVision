@@ -2,7 +2,10 @@ import cv2 as cv
 import numpy as np
 
 
-class StereoProcessor():
+class StereoProcessor:
+    debug = False
+    def __init__(self, debug=False):
+        self.debug = debug
 
     def undistort_rectify(self, frameL, frameR, stereocam):
         undistorted_left = cv.remap(frameL, stereocam.stereomapL_x, stereocam.stereomapL_y, cv.INTER_LANCZOS4, cv.BORDER_CONSTANT, 0)
@@ -20,10 +23,10 @@ class StereoProcessor():
         else:
             f_pixel = stereocam.left_camera.f
 
-        xr = pr[0]
-        xl = pl[0]
+        xr = pr
+        xl = pl
 
-        disp = xl - xr
-        zD = (stereocam.baseline*f_pixel) / disp
+        disp = pr - pl
+        zD = (stereocam.baseline*f_pixel) / disp[0]
         print(f"Distanz Kamera-Punkt: {abs(zD)}")
         return abs(zD)

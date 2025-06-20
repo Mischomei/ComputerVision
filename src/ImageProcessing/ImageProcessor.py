@@ -5,18 +5,23 @@ import cv2 as cv
 import numpy as np
 import imutils
 import os
+from pathlib import Path
 from numpy.polynomial import Polynomial as poly
 
-from cv2 import imshow
+from cv2 import imshow, invert
 
+MASK_REP = 5
+CAMERA_PARAM_REP = 5
 
 class ImageProcessor:
-
-    def __init__(self):
-        pass
+    debug = False
+    def __init__(self, debug=False):
+        self.debug = debug
 
     def undistort(self, folder, image, camera, destFolder=None):
-        img = cv.imread(os.path.join(folder, image))
+        img = cv.imread(folder / image)
+        #debug
+        if self.debug:self.showimg(img, "img")
         h,w = img.shape[:2]
 
         #Optimisierung der Kameramatrix passend zur Auflösung des Bildes
@@ -50,26 +55,25 @@ class ImageProcessor:
         g_blur = cv.GaussianBlur(g, (3, 3), 0)
         r_blur = cv.GaussianBlur(r, (3, 3), 0)
 
+        #Edge detection on colorchannels
         b_edges = cv.Canny(b_blur, 25, 125, apertureSize=3)
         g_edges = cv.Canny(g_blur, 25, 125, apertureSize=3)
         r_edges = cv.Canny(r_blur, 25, 125, apertureSize=3)
 
         combthresh = cv.bitwise_or(b_edges, g_edges, r_edges)
         combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, (5, 5), iterations=3)
+        threshmask = self.edit_thresh_mask(masks[0], 1)
+        invmask = self.edit_inv_mask(masks[0], 1)
 
-        threshmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, (20, 20), iterations=2)
-        threshmask = cv.morphologyEx(threshmask, cv.MORPH_DILATE, None, iterations=5)
-        threshmask = cv.morphologyEx(threshmask, cv.MORPH_OPEN, (20, 20), iterations=2)
-
-        invmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, None, iterations=10)
-        invmask = cv.morphologyEx(invmask, cv.MORPH_OPEN, None, iterations=1)
-        invmask = cv.bitwise_not(invmask)
 
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=threshmask)
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=invmask)
-
+        #debug
+        if self.debug: self.showimg(combthresh, "combthresh")
+        #Finding outlines
         lines, point = self.lines(combthresh, img_copy)
-        self.showimg(lines, "edgesthreshlines")
+        #debug
+        if self.debug:self.showimg(lines, "edgesthreshlines")
 
         return img_copy, point
 
@@ -102,13 +106,37 @@ class ImageProcessor:
         img_copy = img.copy()
         return img_copy[cxs:cxe, cys:cye]
 
-    def color_mask(self, img, lower, upper):
+    def create_mask(self, img, lower, upper):
         img_copy = img.copy()
         img_copy = cv.cvtColor(img_copy, cv.COLOR_BGR2HSV)
         mask = cv.inRange(img_copy, lower, upper)
         mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
         mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
         return mask
+
+    def edit_thresh_mask(self, mask, dist_param):
+        #Dilating mask to create outer object selection
+        threshmask = cv.morphologyEx(mask, cv.MORPH_ERODE, (20, 20), iterations=2)
+        threshmask = cv.morphologyEx(threshmask, cv.MORPH_DILATE, None, iterations=dist_param)
+        threshmask = cv.morphologyEx(threshmask, cv.MORPH_OPEN, (20, 20), iterations=2)
+
+        #debug
+        if self.debug: self.showimg(threshmask, "threshmask")
+        return threshmask
+
+
+    def edit_inv_mask(self, mask, dist_param):
+        #Eroding Mask to create inner removal mask
+        invmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, None, iterations=dist_param*2)
+        invmask = cv.morphologyEx(invmask, cv.MORPH_OPEN, None, iterations=1)
+        invmask = cv.bitwise_not(invmask)
+
+        #debug
+        if self.debug: self.showimg(invmask, "invmask")
+        return invmask
+
+    def edit_inv_mask(self, mask, dist_param):
+        pass
 
     def cornersto3d(self, corners):
         if len(corners) == 4:
@@ -131,11 +159,28 @@ class ImageProcessor:
     def calc_coords_from_corners(self):
         pass
 
+    def detect_arucomarker(self, img):
+        pass
+
     #Anzeigen des Bildes
     def showimg(self, img, name):
         cv.imshow(name, img)
         cv.waitKey(0)
         cv.destroyWindow(name)
+
+    def sbm(self):
+        out = np.array()
+        while out.empty():
+            for i in range(MASK_REP):
+                try:
+                    pass
+                except:
+                    pass
+
+
+
+    def start_searching(self):
+        pass
 
 
 

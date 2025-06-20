@@ -4,9 +4,11 @@ import numpy as np
 import os
 import json
 import time
+from pathlib import Path
 
 # Kamera Klasse
 class Camera:
+    debug=False
     #Kameraparameter // Camera parameters
     f = None # Focal length
     resolution = (0, 0) # Auflösung // Resolution
@@ -14,7 +16,8 @@ class Camera:
     objPoints, imgPoints = None, None
     newCameramatrix = None
 
-    def __init__(self, resolution = (0,0), data=None):
+    def __init__(self, resolution = (0,0), data=None, debug=False):
+        self.debug = debug
         self.resolution = resolution
         if data:
             self.load_settings(data)
@@ -33,7 +36,7 @@ class Camera:
         imgPoints = []
 
         # Bilder für Kalibrierung // Calibration images
-        images = glob.glob(folder + f'/*.{calibfilesdtype}')
+        images = list(folder.glob(f"*.{calibfilesdtype}"))
         for image in images:
             print(image)
             img = cv.imread(image)
@@ -86,13 +89,15 @@ class Camera:
     # TODO Fix Settings Saving and Loading
     # Gespeicherte Einstellungen laden // Load saved settings
     def load_settings(self, data_folder, filename="camera_settings.json"):
-        with open(os.path.join(data_folder, filename)) as json_file:
+        with open(data_folder / filename) as json_file:
             data = json.load(json_file)
             self.f = data["f"]
             self.resolution = data["resolution"]
             self.cameraMatrix = np.asarray(data["cameraMatrix"])
             self.newCameramatrix = np.asarray(data["newCameramatrix"])
             self.dist = np.array(data["dist"])
+            self.objPoints = np.asarray(data["objPoints"])
+            self.imgPoints = np.asarray(data["imgPoints"])
             print(data)
         print("---Kamera Parameter geladen---")
 
@@ -104,11 +109,13 @@ class Camera:
             "cameraMatrix": self.cameraMatrix.tolist(),
             "newCameramatrix": self.newCameramatrix.tolist(),
             "dist": self.dist.tolist(),
+            "objPoints": np.asarray(self.objPoints).tolist(),
+            "imgPoints": np.asarray(self.imgPoints).tolist(),
         }
 
         json_obj = json.dumps(settings, indent=4)
 
-        with open(os.path.join(data_folder, filename), "w") as outfile:
+        with open(data_folder / filename, "w") as outfile:
             outfile.write(json_obj)
 
         print("---Kamera Parameter gespeichert---")

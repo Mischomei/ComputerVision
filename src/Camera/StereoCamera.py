@@ -33,7 +33,6 @@ class StereoCamera(Camera):
             self.stereomapL_y = stereomapL[1]
             self.stereomapR_x = stereomapR[0]
             self.stereomapR_y = stereomapR[1]
-            self.stereomapR = stereomapR
             print("Stereo-Kalibrierung erfolgreich")
         else:
             print("Stereo-Kalibrierung fehlgeschlagen")
