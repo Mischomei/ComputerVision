@@ -19,7 +19,7 @@ class Picamera:
         self.picam.stop()
 
     def preview(self):
-        self.preview_config = self.picam.create_preview_configuration()
+        #self.preview_config = self.picam.create_preview_configuration()
         self.picam.configure(self.preview_config)
         self.picam.start_preview(Preview.QT )
 
