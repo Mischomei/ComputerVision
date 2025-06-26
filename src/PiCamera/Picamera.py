@@ -12,7 +12,7 @@ class Picamera:
         self.picam = Picamera2(cam_num)
         self.preview_config = self.picam.create_preview_configuration(main={"size": (4500, 2500)}, lores={"size": (320, 240)}, display="lores")
 
-    def start(self ):
+    def start(self):
         self.picam.start()
 
     def stop(self):
@@ -21,7 +21,7 @@ class Picamera:
     def preview(self):
         #self.preview_config = self.picam.create_preview_configuration()
         self.picam.configure(self.preview_config)
-        self.picam.start_preview(Preview.QT )
+        self.picam.start_preview(Preview.QT)
 
     def capture(self, type, name="test.jpg", wait=True):
         if type == 0:
@@ -31,11 +31,13 @@ class Picamera:
         return wait
 
     def capture_normal(self, type=1, name="test.jpg"):
-        self.picam.configure(self.picam.create_still_configuration)()
+        img = None
+        self.picam.configure(self.picam.create_still_configuration())
         if type == 0:
             img = self.picam.capture_file(name)
         if type == 1:
             img = self.picam.capture_array()
         self.picam.configure(self.preview_config)
+
         return img
 

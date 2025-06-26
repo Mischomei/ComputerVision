@@ -2,10 +2,14 @@ import threading
 import sys
 import time
 from pathlib import Path
+import curses
 sys.path.insert(1, (Path.cwd().parent).as_posix())
 from src.PiCamera.Picamera import Picamera
 from src.ImageProcessing.ImageProcessor import ImageProcessor
 import cv2 as cv
+
+stdsrc = curses.initscr()
+
 proc = ImageProcessor()
 cam1 = Picamera(0)
 
@@ -17,11 +21,15 @@ cam2.preview()
 cam2.start()
 
 while True:
-    if cv.waitKey(1) & 0xFF == ord("q"):
+    press = stdsrc.getkey()
+    if press == "s":
+        pic = cam1.capture_normal(0)
+        proc.showimg(pic, "picutre")
+    if press == "q":
         break
-    elif cv.waitKey(1) & 0xFF == ord("s"):
-        img = cam1.capture_normal()
-        proc.showimg(img, "img")
+
+
+
 #stream1 = threading.Thread(cam1.preview())
 #stream2 = threading.Thread(cam2.preview())
 #capture1 = threading.Thread()
