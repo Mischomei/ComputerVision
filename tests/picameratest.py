@@ -30,7 +30,7 @@ def calibration():
             press = stdsrc.getkey()
             if press == "s":
                 pic1 = cam1.capture_normal(0, handler.CALIB_FOLDER / "calibration_left" / f"calibration_{num}.jpg")
-                pic2 = cam2.capture_normal(0, handler.CALIB_FOLDER / "calibration_left" / f"calibration_{num}.jpg")
+                pic2 = cam2.capture_normal(0, handler.CALIB_FOLDER / "calibration_right" / f"calibration_{num}.jpg")
                 proc.showimg(pic1, f"calibration_left_{num}")
                 proc.showimg(pic2, f"calibration_right_{num}")
                 num +=1
