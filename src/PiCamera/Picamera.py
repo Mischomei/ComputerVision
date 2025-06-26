@@ -1,19 +1,16 @@
 from picamera2 import Picamera2 , Preview
-
 CAPTURE_JPG = 0
 CAPTURE_ARRAY = 1
 
 class Picamera:
-    camnum: int
-    picam: Picamera2
+    picam = None
+    camnum = None
     preview_config = 0
     video_config = 0
     def __init__(self, cam_num):
         self.camnum = cam_num
-        self.picam = Picamera2()
+        self.picam = Picamera2(cam_num)
         self.preview_config = self.picam.create_preview_configuration(main={"size": (4500, 2500)}, lores={"size": (320, 240)}, display="lores")
-        self.video_config = self.picam.create_video_configuration(display="lores")
-        self.picam.configure(self.preview_config)
 
     def start(self ):
         self.picam.start()
@@ -22,7 +19,9 @@ class Picamera:
         self.picam.stop()
 
     def preview(self):
-        self.picam.start_preview(Preview.QT)
+        self.preview_config = self.picam.create_preview_configuration()
+        self.picam.configure(self.preview_config)
+        self.picam.start_preview(Preview.QT )
 
     def capture(self, type, name="test.jpg", wait=True):
         if type == 0:
@@ -31,4 +30,12 @@ class Picamera:
             job = self.picam.capture_array(wait=wait)
         return wait
 
+    def capture_normal(self, type=1, name="test.jpg"):
+        self.picam.configure(self.picam.create_still_configuration)()
+        if type == 0:
+            img = self.picam.capture_file(name)
+        if type == 1:
+            img = self.picam.capture_array()
+        self.picam.configure(self.preview_config)
+        return img
 
