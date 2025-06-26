@@ -1,4 +1,5 @@
 from picamera2 import Picamera2 , Preview
+import cv2 as cv
 CAPTURE_JPG = 0
 CAPTURE_ARRAY = 1
 
@@ -10,7 +11,7 @@ class Picamera:
     def __init__(self, cam_num):
         self.camnum = cam_num
         self.picam = Picamera2(cam_num)
-        self.preview_config = self.picam.create_preview_configuration(main={"size": (4500, 2500)}, lores={"size": (320, 240)}, display="lores")
+        self.preview_config = self.picam.create_preview_configuration(main={"size": (4500, 2500), "format": 'XRGB8888'}, lores={"size": (320, 240)}, display="lores")
 
     def start(self):
         self.picam.start()
@@ -32,12 +33,13 @@ class Picamera:
 
     def capture_normal(self, type=1, name="test.jpg"):
         img = None
-        #self.picam.configure(self.picam.create_still_configuration())
         if type == 0:
-            img = self.picam.capture_file(name)
+            self.picam.capture_file(name)
+            img = self.picam.capture_array()
         if type == 1:
             img = self.picam.capture_array()
-        #self.picam.configure(self.preview_config)
+        if type == 2:
+            img = self.picam.capture_file(name)
 
         return img
 
