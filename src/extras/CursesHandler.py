@@ -1,6 +1,6 @@
 import curses
 
-class Curses_Handler:
+class CursesHandler:
     def __enter__(self):
         self.stdsrc = curses.initscr()
         curses.cbreak()

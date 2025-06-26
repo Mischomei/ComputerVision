@@ -7,8 +7,12 @@ sys.path.insert(1, (Path.cwd().parent).as_posix())
 from src.PiCamera.Picamera import Picamera
 from src.ImageProcessing.ImageProcessor import ImageProcessor
 import cv2 as cv
-from src.extras.curses_handling import Curses_Handler
+from src.extras.CursesHandler import CursesHandler
+from src.extras.PathHandler import Pathhandler
 
+
+handler = Pathhandler()
+handler.set_calibration_images_folder("example_data/new_calibration")
 proc = ImageProcessor()
 cam1 = Picamera(0)
 
@@ -19,16 +23,31 @@ cam1.start()
 cam2.preview()
 cam2.start()
 
-with Curses_Handler() as stdsrc:
-    while True:
-        press = stdsrc.getkey()
-        if press == "s":
-            pic = cam1.capture_normal(1)
-            proc.showimg(pic, "picutre")
-        if press == "q":
-            break
+def calibration():
+    num = 0
+    with CursesHandler() as stdsrc:
+        while True:
+            press = stdsrc.getkey()
+            if press == "s":
+                pic1 = cam1.capture_normal(0, handler.CALIB_FOLDER / "calibration_left" / f"calibration_{num}")
+                pic2 = cam2.capture_normal(0, handler.CALIB_FOLDER / "calibration_left" / f"calibration_{num}")
+                proc.showimg(pic1, f"calibration_left_{num}")
+                proc.showimg(pic2, f"calibration_right_{num}")
+                num +=1
+            if press == "q":
+                break
 
+def test():
+    with CursesHandler() as stdsrc:
+        while True:
+            press = stdsrc.getkey()
+            if press == "s":
+                pic = cam1.capture_normal(1)
+                proc.showimg(pic, "picutre")
+            if press == "q":
+                break
 
+calibration()
 
 #stream1 = threading.Thread(cam1.preview())
 #stream2 = threading.Thread(cam2.preview())
