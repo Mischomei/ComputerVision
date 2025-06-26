@@ -32,12 +32,12 @@ class Picamera:
 
     def capture_normal(self, type=1, name="test.jpg"):
         img = None
-        self.picam.configure(self.picam.create_still_configuration())
+        #self.picam.configure(self.picam.create_still_configuration())
         if type == 0:
             img = self.picam.capture_file(name)
         if type == 1:
             img = self.picam.capture_array()
-        self.picam.configure(self.preview_config)
+        #self.picam.configure(self.preview_config)
 
         return img
 
