@@ -23,7 +23,7 @@ cam2.start()
 while True:
     press = stdsrc.getkey()
     if press == "s":
-        pic = cam1.capture_normal(0)
+        pic = cam1.capture_normal(1)
         proc.showimg(pic, "picutre")
     if press == "q":
         break
