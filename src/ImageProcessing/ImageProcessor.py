@@ -48,7 +48,7 @@ class ImageProcessor:
 
 
     def get_color_channels(self, img, mask):
-        distparam = 3
+        distparam = 5
         img_copy = img.copy()
         b, g, r = cv.split(img_copy)
         blank = np.zeros(img.shape[:2], dtype="uint8")
@@ -83,17 +83,29 @@ class ImageProcessor:
     def lines(self, edge):
 
         #Approxpoly
-        cons = cv.findContours(edge, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        cons = cv.findContours(edge, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
         cons = imutils.grab_contours(cons)
         c = max(cons, key=cv.contourArea)
 
         #poly = cv.approxPolyDP(c, 0.02 * cv.arcLength(c, True), True)
-        poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]),ensure_convex=True)
+        poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]), ensure_convex=True)
 
         #debug
         if self.debug: print(poly)
+        print(np.asarray(poly[0].astype(int)))
 
-        return poly, np.asarray(poly[0].astype(int))
+        #sorting so corner at bottom is 0
+        maxpoly = (0, 0)
+        index = 0
+        outpoly = poly[0].astype(int)
+        for i in range(len(outpoly)):
+            if maxpoly[0] >= outpoly[i][0] and maxpoly[1] >= outpoly[i][1]:
+                maxpoly = outpoly[i]
+                index = i
+
+        outpoly = np.concatenate((outpoly[index:], outpoly[:index]), axis=0)
+
+        return poly, outpoly
 
 
     def drawcontour(self, img, points, poly=None, color=None):
@@ -159,7 +171,7 @@ class ImageProcessor:
 
     def edit_inv_mask(self, mask, dist_param):
         #Eroding Mask to create inner removal mask
-        invmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, None, iterations=dist_param*2)
+        invmask = cv.morphologyEx(mask, cv.MORPH_ERODE, None, iterations=dist_param)
         invmask = cv.morphologyEx(invmask, cv.MORPH_OPEN, None, iterations=1)
         invmask = cv.bitwise_not(invmask)
 
@@ -204,6 +216,12 @@ class ImageProcessor:
                 outmasks[color[2]] = mask
 
         return outmasks
+
+    def maskstolist(self, masks):
+        out = []
+        for key in masks.keys():
+            out.append((masks[key], key))
+        return out
 
     #Für alle Farben jeweils seperate Kantenerkennungen und diese kombinieren
     def cons_per_color(self, img, masks):
@@ -257,6 +275,7 @@ class ImageProcessor:
 
     def aruco_pose_estimation(self, img, aruco_dict_type, marker_size, matrix_coeffs, distortion_coeffs):
         r_vecs, t_vecs = list(), list()
+
         markerPoints = np.array([[-marker_size/2, marker_size/2, 0],
                                  [marker_size/2, marker_size/2, 0],
                                  [marker_size/2, -marker_size/2, 0],
@@ -265,8 +284,10 @@ class ImageProcessor:
         aruco_dict = aruco.getPredefinedDictionary(aruco_dict_type)
         params = aruco.DetectorParameters()
         detector = aruco.ArucoDetector(aruco_dict, params)
-        marker_corners, marker_ids, rejected_corners = detector.detectMarkers(img)
-
+        imgcopy = img.copy()
+        gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
+        marker_corners, marker_ids, rejected_corners = detector.detectMarkers(gray)
+        ret = False
 
         if marker_ids is not None:
             for i in range(len(marker_ids)):
@@ -274,16 +295,22 @@ class ImageProcessor:
                 if ret:
                     r_vecs.append(rvec)
                     t_vecs.append(tvec)
+            ret = True
 
-        return r_vecs, t_vecs
+        return ret, r_vecs, t_vecs
 
 
-    def aruco_pose_drawing(self, img, r_vecs, t_vecs, marker_size, mat, dist):
+    def pose_drawing(self, img, r_vecs, t_vecs, marker_size, mat, dist):
         imgcopy  = img.copy()
         if len(r_vecs) == len(t_vecs):
             for i in range(len(r_vecs)):
                 cv.drawFrameAxes(imgcopy, mat, dist, r_vecs[i], t_vecs[i], marker_size)
         return imgcopy
+
+
+    def trypnp(self, img, objpoints, points, matrix, dist, size):
+        ret, rvec, tvec = cv.solvePnP(objpoints, points, matrix, dist, flags=cv.SOLVEPNP_ITERATIVE)
+        return ret, rvec, tvec
 
 
     def start_searching(self):
