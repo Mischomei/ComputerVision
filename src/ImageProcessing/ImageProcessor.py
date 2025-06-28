@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from numpy.polynomial import Polynomial as poly
 
-from cv2 import imshow, invert
+from cv2 import aruco
 
 MASK_REP = 5
 CAMERA_PARAM_REP = 5
@@ -167,11 +167,7 @@ class ImageProcessor:
         if self.debug: self.showimg(invmask, "invmask")
         return invmask
 
-
-    def edit_inv_mask(self, mask, dist_param):
-        pass
-
-
+    #Weiß noch nicht ob ich das brauche ???
     def cornersto3d(self, corners):
         if len(corners) == 4:
             pass
@@ -181,27 +177,23 @@ class ImageProcessor:
             # Aus Ecken Kanten machen
             pass
 
-
+    #sollte in extras sein???
     def depthestimatetest(self, img, realsize, imgsize, f, sensor):
         return ()
 
-
+    #Kp wofür das ist
     def refine_edges(self):
         pass
 
-
+    #Kp wofür das ist Pt.2
     def calc_coords_from_edges(self):
         pass
 
-
+    #Erklärt sich von selbst
     def calc_coords_from_corners(self):
         pass
 
-
-    def detect_arucomarker(self, img):
-        pass
-
-
+    #Erstellt Maske für HSV Farbräume
     def createmasks(self, img, colors):
         imgcopy = img.copy()
         outmasks = dict()
@@ -236,7 +228,7 @@ class ImageProcessor:
         cv.waitKey(0)
         cv.destroyWindow(name)
 
-
+    #wtf ist sbm???
     def sbm(self):
         out = np.array()
         while out.empty():
@@ -246,6 +238,52 @@ class ImageProcessor:
                 except:
                     pass
 
+
+    def generate_aruco(self, dest, aruco_dict, num_markers, marker_size, start_id):
+        arucodict = cv.aruco.getPredefinedDictionary(aruco_dict)
+        id = start_id
+        for i in range(num_markers):
+            img_marker = np.zeros((marker_size, marker_size), dtype=np.uint8)
+            img_marker = cv.aruco.generateImageMarker(arucodict, id, marker_size, img_marker, 1)
+            cv.imwrite(dest / f"marker_{id}.jpg", img_marker)
+            id+=1
+            #debug
+            if self.debug: self.showimg(img_marker, "aruco_marker")
+
+
+    #Eigentlich unnötig, lasse ich vlt für noch irgendwas
+    def detect_aruco(self):
+        pass
+
+    def aruco_pose_estimation(self, img, aruco_dict_type, marker_size, matrix_coeffs, distortion_coeffs):
+        r_vecs, t_vecs = list(), list()
+        markerPoints = np.array([[-marker_size/2, marker_size/2, 0],
+                                 [marker_size/2, marker_size/2, 0],
+                                 [marker_size/2, -marker_size/2, 0],
+                                 [-marker_size/2, -marker_size/2, 0]], dtype=np.float32)
+
+        aruco_dict = aruco.getPredefinedDictionary(aruco_dict_type)
+        params = aruco.DetectorParameters()
+        detector = aruco.ArucoDetector(aruco_dict, params)
+        marker_corners, marker_ids, rejected_corners = detector.detectMarkers(img)
+
+
+        if marker_ids is not None:
+            for i in range(len(marker_ids)):
+                ret, rvec, tvec = cv.solvePnP(markerPoints, marker_corners[i], matrix_coeffs, distortion_coeffs)
+                if ret:
+                    r_vecs.append(rvec)
+                    t_vecs.append(tvec)
+
+        return r_vecs, t_vecs
+
+
+    def aruco_pose_drawing(self, img, r_vecs, t_vecs, marker_size, mat, dist):
+        imgcopy  = img.copy()
+        if len(r_vecs) == len(t_vecs):
+            for i in range(len(r_vecs)):
+                cv.drawFrameAxes(imgcopy, mat, dist, r_vecs[i], t_vecs[i], marker_size)
+        return imgcopy
 
 
     def start_searching(self):
