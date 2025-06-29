@@ -61,8 +61,7 @@ def test():
             if press == "q":
                 break
 
-take_pictures(0)
-
+calibration()
 #stream1 = threading.Thread(cam1.preview())
 #stream2 = threading.Thread(cam2.preview())
 #capture1 = threading.Thread()

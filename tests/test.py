@@ -118,4 +118,4 @@ def test_markers():
     processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 4, 600, 16)
 
 if __name__ == "__main__":
-    tryingPnP()
+    pass
