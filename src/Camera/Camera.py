@@ -16,9 +16,8 @@ class Camera:
     objPoints, imgPoints = None, None
     newCameramatrix = None
 
-    def __init__(self, resolution = (0,0), data=None, debug=False):
+    def __init__(self, data=None, debug=False):
         self.debug = debug
-        self.resolution = resolution
         if data:
             self.load_settings(data)
 
@@ -80,7 +79,6 @@ class Camera:
 
     def show_parameters(self):
         print(f"---Focal Length: {self.f}---")
-        print(f"---Resolution: {self.resolution}---")
         print(f"---Camera Matrix:---\n {self.cameraMatrix}")
         print(f"---Distortion Matrix:---\n {self.dist}")
         print(f"---Rotation Vectors:---\n {self.rvecs}")
@@ -92,12 +90,9 @@ class Camera:
         with open(data_folder / filename) as json_file:
             data = json.load(json_file)
             self.f = data["f"]
-            self.resolution = data["resolution"]
             self.cameraMatrix = np.asarray(data["cameraMatrix"])
             self.newCameramatrix = np.asarray(data["newCameramatrix"])
             self.dist = np.array(data["dist"])
-            self.objPoints = np.asarray(data["objPoints"])
-            self.imgPoints = np.asarray(data["imgPoints"])
             print(data)
         print("---Kamera Parameter geladen---")
 
@@ -105,12 +100,9 @@ class Camera:
     def save_settings(self, data_folder, filename="camera_settings.json"):
         settings = {
             "f": self.f,
-            "resolution": self.resolution,
             "cameraMatrix": self.cameraMatrix.tolist(),
             "newCameramatrix": self.newCameramatrix.tolist(),
             "dist": self.dist.tolist(),
-            "objPoints": np.asarray(self.objPoints).tolist(),
-            "imgPoints": np.asarray(self.imgPoints).tolist(),
         }
 
         json_obj = json.dumps(settings, indent=4)

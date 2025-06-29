@@ -1,7 +1,7 @@
 from pathlib import Path
 
 #Path handler Class for easier access and saving of data (only usable from files in subfolder of src like tests or similar)
-class Pathhandler:
+class PathHandler:
     def __init__(self):
         self.CUR_PATH = Path.cwd()
         self.PARENT_PATH = self.CUR_PATH.parent

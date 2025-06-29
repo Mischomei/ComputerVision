@@ -6,9 +6,8 @@ import numpy as np
 import imutils
 import os
 from pathlib import Path
-from numpy.polynomial import Polynomial as poly
-
-from cv2 import imshow, invert
+from src.extras.trigonometry import len_line
+from cv2 import aruco
 
 MASK_REP = 5
 CAMERA_PARAM_REP = 5
@@ -48,7 +47,7 @@ class ImageProcessor:
 
 
     def get_color_channels(self, img, mask):
-        distparam = 3
+        distparam = 5
         img_copy = img.copy()
         b, g, r = cv.split(img_copy)
         blank = np.zeros(img.shape[:2], dtype="uint8")
@@ -66,7 +65,7 @@ class ImageProcessor:
 
 
         combthresh = cv.bitwise_or(b_edges, g_edges, r_edges)
-        combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, (5, 5), iterations=3)
+        combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, (3,3), iterations=2)
         threshmask = self.edit_thresh_mask(mask, distparam)
         invmask = self.edit_inv_mask(mask, distparam)
 
@@ -80,20 +79,40 @@ class ImageProcessor:
         return combthresh
 
 
-    def lines(self, edge):
+    def lines(self, edge, eps=-1):
 
         #Approxpoly
-        cons = cv.findContours(edge, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        cons = cv.findContours(edge, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
         cons = imutils.grab_contours(cons)
         c = max(cons, key=cv.contourArea)
 
+        if eps != -1:
+            arc = cv.arcLength(c, True)
+            eps = eps * arc
+
         #poly = cv.approxPolyDP(c, 0.02 * cv.arcLength(c, True), True)
-        poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]),ensure_convex=True)
+        poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]), epsilon_percentage=eps, ensure_convex=True)
 
         #debug
         if self.debug: print(poly)
 
-        return poly, np.asarray(poly[0].astype(int))
+        #sorting so corner at bottom is 0
+        maxpoly = (0, 0)
+        maxlen = 0
+        index = 0
+        outpoly = poly[0].astype(int)
+        outpoly = np.flip(outpoly, axis=0)
+        for i in range(1, len(outpoly) + 1):
+            vec = outpoly[i] - outpoly[i-1] if i <=5 else outpoly[0] - outpoly[i-1]
+            lenvec = np.linalg.norm(vec, ord=2)
+            if lenvec >= maxlen:
+                index = i-1
+                maxlen = lenvec
+
+        outpoly = np.concatenate((outpoly[index:], outpoly[:index]), axis=0)
+        #outpoly = np.concatenate(([outpoly[0]],np.flip(outpoly[1:], axis=0)), axis=0)
+        print(outpoly)
+        return poly, outpoly
 
 
     def drawcontour(self, img, points, poly=None, color=None):
@@ -159,7 +178,7 @@ class ImageProcessor:
 
     def edit_inv_mask(self, mask, dist_param):
         #Eroding Mask to create inner removal mask
-        invmask = cv.morphologyEx(masks[0], cv.MORPH_ERODE, None, iterations=dist_param*2)
+        invmask = cv.morphologyEx(mask, cv.MORPH_ERODE, None, iterations=dist_param)
         invmask = cv.morphologyEx(invmask, cv.MORPH_OPEN, None, iterations=1)
         invmask = cv.bitwise_not(invmask)
 
@@ -167,11 +186,7 @@ class ImageProcessor:
         if self.debug: self.showimg(invmask, "invmask")
         return invmask
 
-
-    def edit_inv_mask(self, mask, dist_param):
-        pass
-
-
+    #Weiß noch nicht ob ich das brauche ???
     def cornersto3d(self, corners):
         if len(corners) == 4:
             pass
@@ -181,27 +196,23 @@ class ImageProcessor:
             # Aus Ecken Kanten machen
             pass
 
-
+    #sollte in extras sein???
     def depthestimatetest(self, img, realsize, imgsize, f, sensor):
         return ()
 
-
+    #Kp wofür das ist
     def refine_edges(self):
         pass
 
-
+    #Kp wofür das ist Pt.2
     def calc_coords_from_edges(self):
         pass
 
-
+    #Erklärt sich von selbst
     def calc_coords_from_corners(self):
         pass
 
-
-    def detect_arucomarker(self, img):
-        pass
-
-
+    #Erstellt Maske für HSV Farbräume
     def createmasks(self, img, colors):
         imgcopy = img.copy()
         outmasks = dict()
@@ -212,6 +223,12 @@ class ImageProcessor:
                 outmasks[color[2]] = mask
 
         return outmasks
+
+    def maskstolist(self, masks):
+        out = []
+        for key in masks.keys():
+            out.append((masks[key], key))
+        return out
 
     #Für alle Farben jeweils seperate Kantenerkennungen und diese kombinieren
     def cons_per_color(self, img, masks):
@@ -236,7 +253,7 @@ class ImageProcessor:
         cv.waitKey(0)
         cv.destroyWindow(name)
 
-
+    #wtf ist sbm???
     def sbm(self):
         out = np.array()
         while out.empty():
@@ -246,6 +263,61 @@ class ImageProcessor:
                 except:
                     pass
 
+
+    def generate_aruco(self, dest, aruco_dict, num_markers, marker_size, start_id):
+        arucodict = cv.aruco.getPredefinedDictionary(aruco_dict)
+        id = start_id
+        for i in range(num_markers):
+            img_marker = np.zeros((marker_size, marker_size), dtype=np.uint8)
+            img_marker = cv.aruco.generateImageMarker(arucodict, id, marker_size, img_marker, 1)
+            cv.imwrite(dest / f"marker_{id}.jpg", img_marker)
+            id+=1
+            #debug
+            if self.debug: self.showimg(img_marker, "aruco_marker")
+
+
+    #Eigentlich unnötig, lasse ich vlt für noch irgendwas
+    def detect_aruco(self):
+        pass
+
+    def aruco_pose_estimation(self, img, aruco_dict_type, marker_size, matrix_coeffs, distortion_coeffs):
+        r_vecs, t_vecs = list(), list()
+
+        markerPoints = np.array([[-marker_size/2, marker_size/2, 0],
+                                 [marker_size/2, marker_size/2, 0],
+                                 [marker_size/2, -marker_size/2, 0],
+                                 [-marker_size/2, -marker_size/2, 0]], dtype=np.float32)
+
+        aruco_dict = aruco.getPredefinedDictionary(aruco_dict_type)
+        params = aruco.DetectorParameters()
+        detector = aruco.ArucoDetector(aruco_dict, params)
+        imgcopy = img.copy()
+        gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
+        marker_corners, marker_ids, rejected_corners = detector.detectMarkers(gray)
+        ret = False
+
+        if marker_ids is not None:
+            for i in range(len(marker_ids)):
+                ret, rvec, tvec = cv.solvePnP(markerPoints, marker_corners[i], matrix_coeffs, distortion_coeffs)
+                if ret:
+                    r_vecs.append(rvec)
+                    t_vecs.append(tvec)
+            ret = True
+
+        return ret, r_vecs, t_vecs
+
+
+    def pose_drawing(self, img, r_vecs, t_vecs, marker_size, mat, dist):
+        imgcopy  = img.copy()
+        if len(r_vecs) == len(t_vecs):
+            for i in range(len(r_vecs)):
+                cv.drawFrameAxes(imgcopy, mat, dist, r_vecs[i], t_vecs[i], marker_size)
+        return imgcopy
+
+
+    def trypnp(self, img, objpoints, points, matrix, dist, size):
+        ret, rvec, tvec = cv.solvePnP(objpoints, points, matrix, dist)
+        return ret, rvec, tvec
 
 
     def start_searching(self):

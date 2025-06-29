@@ -16,7 +16,6 @@ data/webcam1
 data/info.txt
 
 #Test files
-tests/test.py
 tests/stereotest.py
 tests/main.py
 
