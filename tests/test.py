@@ -13,7 +13,7 @@ from src.extras import PathHandler
 #Paths
 
 container_points = np.array([[0, 0, 0], [0.074, 0, 0], [0.074, 0, 0.045], [0.074, 0.037, 0.045], [0, 0.037, 0.045], [0, 0.037, 0]], dtype=np.float64)
-
+container_points2 = np.array([[0, 0, 0], [0.074, 0, 0], [0.074, 0, 0.045], [0.074, 0.037, 0.045], [0, 0.037, 0.045], [0, 0.037, 0]], dtype=np.float64)
 #Resolution
 RESOLUTION = (1920, 1080)
 #Debug
@@ -105,16 +105,17 @@ def tryingPnP():
     masks = processor.maskstolist(masks)
     for mask in masks:
         edges = processor.get_color_channels(undistored1, mask[0])
-        polyn, points = processor.lines(edges)
+        polyn, points = processor.lines(edges, 0.05)
         contouredimg = processor.drawcontour(contouredimg, points, polyn, mask[1])
+        ret = False
         ret, rvec, tvec = processor.trypnp(undistored1, container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist, 0.1)
         if ret:
-            newcontouredimg = processor.pose_drawing(img_left, [rvec], [tvec], 0.04, pi1.cameraMatrix, pi1.dist)
+            newcontouredimg = processor.pose_drawing(undistored1, [rvec], [tvec], 0.04, pi1.cameraMatrix, pi1.dist - pi1.dist)
             processor.showimg(newcontouredimg, "tryingPnP_contoured")
     processor.showimg(contouredimg, "tryingPnP")
 
 def test_markers():
-    processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 1, 200, 0)
+    processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 4, 600, 16)
 
 if __name__ == "__main__":
     tryingPnP()

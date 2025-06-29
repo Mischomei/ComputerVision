@@ -6,8 +6,7 @@ import numpy as np
 import imutils
 import os
 from pathlib import Path
-from numpy.polynomial import Polynomial as poly
-
+from src.extras.trigonometry import len_line
 from cv2 import aruco
 
 MASK_REP = 5
@@ -66,7 +65,7 @@ class ImageProcessor:
 
 
         combthresh = cv.bitwise_or(b_edges, g_edges, r_edges)
-        combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, (5, 5), iterations=3)
+        combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, (3,3), iterations=2)
         threshmask = self.edit_thresh_mask(mask, distparam)
         invmask = self.edit_inv_mask(mask, distparam)
 
@@ -80,31 +79,39 @@ class ImageProcessor:
         return combthresh
 
 
-    def lines(self, edge):
+    def lines(self, edge, eps=-1):
 
         #Approxpoly
         cons = cv.findContours(edge, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
         cons = imutils.grab_contours(cons)
         c = max(cons, key=cv.contourArea)
 
+        if eps != -1:
+            arc = cv.arcLength(c, True)
+            eps = eps * arc
+
         #poly = cv.approxPolyDP(c, 0.02 * cv.arcLength(c, True), True)
-        poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]), ensure_convex=True)
+        poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]), epsilon_percentage=eps, ensure_convex=True)
 
         #debug
         if self.debug: print(poly)
-        print(np.asarray(poly[0].astype(int)))
 
         #sorting so corner at bottom is 0
         maxpoly = (0, 0)
+        maxlen = 0
         index = 0
         outpoly = poly[0].astype(int)
-        for i in range(len(outpoly)):
-            if maxpoly[0] >= outpoly[i][0] and maxpoly[1] >= outpoly[i][1]:
-                maxpoly = outpoly[i]
-                index = i
+        outpoly = np.flip(outpoly, axis=0)
+        for i in range(1, len(outpoly) + 1):
+            vec = outpoly[i] - outpoly[i-1] if i <=5 else outpoly[0] - outpoly[i-1]
+            lenvec = np.linalg.norm(vec, ord=2)
+            if lenvec >= maxlen:
+                index = i-1
+                maxlen = lenvec
 
         outpoly = np.concatenate((outpoly[index:], outpoly[:index]), axis=0)
-
+        #outpoly = np.concatenate(([outpoly[0]],np.flip(outpoly[1:], axis=0)), axis=0)
+        print(outpoly)
         return poly, outpoly
 
 
@@ -309,7 +316,7 @@ class ImageProcessor:
 
 
     def trypnp(self, img, objpoints, points, matrix, dist, size):
-        ret, rvec, tvec = cv.solvePnP(objpoints, points, matrix, dist, flags=cv.SOLVEPNP_ITERATIVE)
+        ret, rvec, tvec = cv.solvePnP(objpoints, points, matrix, dist)
         return ret, rvec, tvec
 
 
