@@ -8,10 +8,10 @@ from src.PiCamera.Picamera import Picamera
 from src.ImageProcessing.ImageProcessor import ImageProcessor
 import cv2 as cv
 from src.extras.CursesHandler import CursesHandler
-from src.extras.PathHandler import Pathhandler
+from src.extras.PathHandler import PathHandler
 
 
-handler = Pathhandler()
+handler = PathHandler()
 handler.set_calibration_images_folder("example_data/new_calibration")
 proc = ImageProcessor()
 cam_right = Picamera(0)
