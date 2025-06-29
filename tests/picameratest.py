@@ -43,7 +43,7 @@ def take_pictures(num = 0):
         while True:
             press = stdsrc.getkey()
             if press == "s":
-                pic1 = cam_right.capture_normal(0, handler.IMAGE_FOLDER / "mew_images_right" / f"image_{num}.jpg")
+                pic1 = cam_right.capture_normal(0, handler.IMAGE_FOLDER / "new_images_right" / f"image_{num}.jpg")
                 pic2 = cam_left.capture_normal(0, handler.IMAGE_FOLDER / "new_images_left" / f"image_{num}.jpg")
                 proc.showimg(pic1, f"new_picture_{num}")
                 proc.showimg(pic2, f"new_picture{num}")
