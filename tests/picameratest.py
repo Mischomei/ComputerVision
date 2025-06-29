@@ -13,6 +13,7 @@ from src.extras.PathHandler import PathHandler
 
 handler = PathHandler()
 handler.set_calibration_images_folder("example_data/new_calibration")
+handler.set_image_folder("example_data/new_images")
 proc = ImageProcessor()
 cam_right = Picamera(0)
 
