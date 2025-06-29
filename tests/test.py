@@ -13,15 +13,15 @@ from src.extras import PathHandler
 #Paths
 
 container_points = np.array([[0, 0, 0], [0.074, 0, 0], [0.074, 0, 0.045], [0.074, 0.037, 0.045], [0, 0.037, 0.045], [0, 0.037, 0]], dtype=np.float64)
-container_points2 = np.array([[0, 0, 0], [0.074, 0, 0], [0.074, 0, 0.045], [0.074, 0.037, 0.045], [0, 0.037, 0.045], [0, 0.037, 0]], dtype=np.float64)
+container_points2 = np.array([[0, 0, 0], [0, 0.037, 0], [0, 0.037, 0.045], [0.074, 0.037, 0.045], [0.074, 0, 0.045], [0.074, 0, 0]], dtype=np.float64)
 #Resolution
 RESOLUTION = (1920, 1080)
 #Debug
-DEBUG = True
+DEBUG = False
 #PathHandler
 handler = PathHandler.PathHandler()
 #testimage
-testimage = "testcontainer2.jpg"
+testimage = "image_9.jpg"
 #ImageProcessor
 processor = ImageProcessor.ImageProcessor(debug=DEBUG)
 #ArucoDict
@@ -31,6 +31,13 @@ colors = [
         (np.array([80.0, 20, 35]), np.array([100.0, 255, 255]), "green"),
         (np.array([125.0, 110, 50]), np.array([160.0, 170, 230]), "red")
               ]
+
+newcolors = [
+    (np.array([87.0, int(255*0.7), int(255*0.4)]), np.array([100.0, 255, int(255*0.78)]), "green"),
+    (np.array([110.0, int(255*0.45), int(255*0.3)]), np.array([113.5, int(255*0.82), int(255*0.62)]), "black"),
+    (np.array([130.0, int(255*0.5), int(255*0.45)]), np.array([170.0, int(255*0.82), int(255*0.85)]), "red"),
+    (np.array([88.5, int(255*0.5), int(255*0.35)]), np.array([97.0, int(255), int(255)]), "cyan")
+]
 
 def pi_stereo():
     pi1 = Camera.Camera(debug=DEBUG)
@@ -95,27 +102,60 @@ def webcam():
 
 def tryingPnP():
     pi1 = Camera.Camera(debug=DEBUG)
+
+    handler.set_calibration_images_folder("example_data/new_calibration")
+    handler.set_image_folder("example_data/new_images")
+
     pi1.calibrate(handler.CALIB_FOLDER / "calibration_left", RESOLUTION, (13, 9))
-    img_left = cv.imread(handler.IMAGE_FOLDER /"container_left" / testimage)
+    img_left = cv.imread(handler.IMAGE_FOLDER /"new_images_left" / testimage)
+    img_left = processor.crop(img_left, 100, 2300, 0, 2700)
     img_left = processor.rotate(processor.rotate(img_left))
-    undistored1 = processor.undistort(handler.IMAGE_FOLDER / "container_left", testimage, pi1, handler.SAVE_FOLDER)
+    undistored1 = processor.undistort(handler.IMAGE_FOLDER / "new_images_left", testimage, pi1, handler.SAVE_FOLDER)
+    undistored1 = processor.crop(undistored1, 100, 2300, 0, 2700)
     undistored1 = processor.rotate(processor.rotate(undistored1))
+    undistored1 = cv.resize(undistored1, (1200, 978))
     contouredimg = undistored1.copy()
-    masks = processor.createmasks(undistored1, colors)
+    masks = processor.createmasks(undistored1, newcolors)
     masks = processor.maskstolist(masks)
+    outimg = undistored1.copy()
+
+    usedpolys = []
+
     for mask in masks:
+
+
         edges = processor.get_color_channels(undistored1, mask[0])
+        for poly in usedpolys:
+            edges = cv.fillPoly(edges, [poly], (0, 0, 0))
         polyn, points = processor.lines(edges, 0.05)
-        contouredimg = processor.drawcontour(contouredimg, points, polyn, mask[1])
-        ret = False
-        ret, rvec, tvec = processor.trypnp(undistored1, container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist, 0.1)
+
+        outimg = processor.drawcontour(outimg, points, polyn, mask[1])
+
+        ret, aruco_rvec, aruco_tvec = processor.aruco_pose_estimation(undistored1, cv.aruco.DICT_6X6_50, 0.051, pi1.newCameramatrix, pi1.dist-pi1.dist)
+        avg_rvec = np.average(aruco_rvec, axis=0)
         if ret:
-            newcontouredimg = processor.pose_drawing(undistored1, [rvec], [tvec], 0.04, pi1.cameraMatrix, pi1.dist - pi1.dist)
-            processor.showimg(newcontouredimg, "tryingPnP_contoured")
-    processor.showimg(contouredimg, "tryingPnP")
+            outimg =processor.pose_drawing(outimg, aruco_rvec, aruco_tvec, 0.051, pi1.newCameramatrix, pi1.dist - pi1.dist)
+
+        # if mask[1] == "green":
+        #     points = np.roll(points, 5, axis=0)
+        # elif mask[1] == "black":
+        #     points = np.roll(points, 6, axis=0)
+        # elif mask[1] == "cyan":
+        #     points = np.roll(points, 2, axis=0)
+        ret, rvec, tvec = processor.trypnp(undistored1, container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist-pi1.dist, 0.1)
+
+        rmat ,jac = cv.Rodrigues(rvec)
+        print(rmat)
+
+        if ret:
+
+            rvec, tvec = cv.solvePnPRefineLM(container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist-pi1.dist, rvec, tvec)
+            outimg = processor.pose_drawing(outimg, [rvec], [tvec], 0.04, pi1.cameraMatrix, pi1.dist - pi1.dist)
+        usedpolys.append(points.astype(np.int32))
+    processor.showimg(outimg, "tryingPnP")
 
 def test_markers():
     processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 4, 600, 16)
 
 if __name__ == "__main__":
-    pass
+    tryingPnP()

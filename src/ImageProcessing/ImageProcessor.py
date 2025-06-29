@@ -65,7 +65,7 @@ class ImageProcessor:
 
 
         combthresh = cv.bitwise_or(b_edges, g_edges, r_edges)
-        combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, (3,3), iterations=2)
+        combthresh = cv.morphologyEx(combthresh, cv.MORPH_CLOSE, None, iterations=2)
         threshmask = self.edit_thresh_mask(mask, distparam)
         invmask = self.edit_inv_mask(mask, distparam)
 
@@ -101,16 +101,20 @@ class ImageProcessor:
         maxlen = 0
         index = 0
         outpoly = poly[0].astype(int)
-        outpoly = np.flip(outpoly, axis=0)
+        #outpoly = np.flip(outpoly, axis=0)
         for i in range(1, len(outpoly) + 1):
             vec = outpoly[i] - outpoly[i-1] if i <=5 else outpoly[0] - outpoly[i-1]
             lenvec = np.linalg.norm(vec, ord=2)
-            if lenvec >= maxlen:
+            if lenvec >= maxlen*0.9:
                 index = i-1
                 maxlen = lenvec
 
         outpoly = np.concatenate((outpoly[index:], outpoly[:index]), axis=0)
-        #outpoly = np.concatenate(([outpoly[0]],np.flip(outpoly[1:], axis=0)), axis=0)
+        if outpoly[0][1] == np.min(np.stack(outpoly, axis=1)[1]):
+            outpoly = np.roll(outpoly, 3, axis=0)
+        # if outpoly[0][0] == np.min(np.stack(outpoly, axis=1)[0]):
+        #     outpoly = np.roll(outpoly, 3, axis=0)
+        #outpoly = np.roll(outpoly, index, axis=0)
         print(outpoly)
         return poly, outpoly
 
@@ -290,10 +294,28 @@ class ImageProcessor:
 
         aruco_dict = aruco.getPredefinedDictionary(aruco_dict_type)
         params = aruco.DetectorParameters()
+        #params.adaptiveThreshConstant = 3
+        #params.aprilTagCriticalRad = 0
+        #params.aprilTagMaxNmaxima = 15
+        #params.aprilTagMinWhiteBlackDiff = 0
+        #params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
+        #params.cornerRefinementMaxIterations = 50
+        #params.errorCorrectionRate = 0.9
+        #params.polygonalApproxAccuracyRate = 0.1
+        #params.useAruco3Detection = True
+        params.adaptiveThreshWinSizeMin = 3
+        params.adaptiveThreshWinSizeMax = 300
+       # params.minMarkerPerimeterRate = 0.01
+        params.adaptiveThreshConstant = 2
+        #params.adaptiveThreshWinSizeStep = 10
+        #params.perspectiveRemovePixelPerCell = 10
+        #params.perspectiveRemoveIgnoredMarginPerCell = 0.05
+        #params.minMarkerPerimeterRate =
         detector = aruco.ArucoDetector(aruco_dict, params)
         imgcopy = img.copy()
-        gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
-        marker_corners, marker_ids, rejected_corners = detector.detectMarkers(gray)
+        #gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
+
+        marker_corners, marker_ids, rejected_corners = detector.detectMarkers(imgcopy)
         ret = False
 
         if marker_ids is not None:

@@ -35,6 +35,7 @@ class Camera:
         imgPoints = []
 
         # Bilder für Kalibrierung // Calibration images
+
         images = list(folder.glob(f"*.{calibfilesdtype}"))
         for image in images:
             print(image)
