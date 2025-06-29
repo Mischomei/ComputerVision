@@ -37,16 +37,15 @@ def calibration():
             if press == "q":
                 break
 
-def take_pictures():
-    num = 0
+def take_pictures(num = 0):
     with CursesHandler() as stdsrc:
         while True:
             press = stdsrc.getkey()
             if press == "s":
                 pic1 = cam_right.capture_normal(0, handler.IMAGE_FOLDER / "mew_images_right" / f"image_{num}.jpg")
                 pic2 = cam_left.capture_normal(0, handler.IMAGE_FOLDER / "new_images_left" / f"image_{num}.jpg")
-                proc.showimg(pic1, f"calibration_left_{num}")
-                proc.showimg(pic2, f"calibration_right_{num}")
+                proc.showimg(pic1, f"new_picture_{num}")
+                proc.showimg(pic2, f"new_picture{num}")
                 num +=1
             if press == "q":
                 break
@@ -61,7 +60,7 @@ def test():
             if press == "q":
                 break
 
-calibration()
+take_pictures(0)
 
 #stream1 = threading.Thread(cam1.preview())
 #stream2 = threading.Thread(cam2.preview())
