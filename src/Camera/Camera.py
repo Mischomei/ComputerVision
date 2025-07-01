@@ -113,3 +113,47 @@ class Camera:
 
         print("---Kamera Parameter gespeichert---")
 
+    def calibrate_charuco(self, folder, charboard, dictionary, calibfilesdtype="jpg"):
+        arucodict = cv.aruco.getPredefinedDictionary(dictionary)
+        params = cv.aruco.DetectorParameters()
+        charparams = cv.aruco.CharucoParameters()
+
+        params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
+
+        ardetector = cv.aruco.ArucoDetector(arucodict, params)
+        chardetector = cv.aruco.CharucoDetector(charboard, charparams, para,s)
+        objPoints = []
+        imgPoints = []
+        all_charuco_corners = []
+        all_charuco_ids = []
+        # Bilder für Kalibrierung // Calibration images
+
+        images = list(folder.glob(f"*.{calibfilesdtype}"))
+        for image in images:
+            img = cv.imread(image)
+            size = img.shape[:2]
+            image_copy = img.copy()
+            marker_corners, marker_ids, rejected_corners = ardetector.detectMarkers(img)
+            if len(marker_ids) > 0:
+                cv.aruco.drawDetectedMarkers(image_copy, marker_corners, marker_ids)
+                marker_corners, marker_ids, rejected_corners = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
+                charuco_corners, charuco_ids = chardetector.detectBoard(img, markerCorners=marker_corners, markerids=marker_ids)
+                imgpts, objpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
+                if len(charuco_ids)>0:
+                    all_charuco_corners.append(charuco_corners)
+                    all_charuco_ids.append(charuco_ids)
+                    objPoints.append(objpts)
+                    imgPoints.append(imgpts)
+        retval, camera_matrix, dist_coeffs, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, size, None, None)
+
+        if retval:
+            self.cameraMatrix = camera_matrix
+            self.dist = dist_coeffs
+            self.rvecs = rvecs
+            self.tvecs = tvecs
+            self.f = self.cameraMatrix[0, 0]
+            self.imgPoints = imgPoints
+            self.objPoints = objPoints
+
+
+

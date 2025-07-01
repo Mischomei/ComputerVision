@@ -284,6 +284,7 @@ class ImageProcessor:
     def detect_aruco(self):
         pass
 
+
     def aruco_pose_estimation(self, img, aruco_dict_type, marker_size, matrix_coeffs, distortion_coeffs):
         r_vecs, t_vecs = list(), list()
 
@@ -298,7 +299,7 @@ class ImageProcessor:
         #params.aprilTagCriticalRad = 0
         #params.aprilTagMaxNmaxima = 15
         #params.aprilTagMinWhiteBlackDiff = 0
-        #params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
+        params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
         #params.cornerRefinementMaxIterations = 50
         #params.errorCorrectionRate = 0.9
         #params.polygonalApproxAccuracyRate = 0.1
@@ -318,13 +319,17 @@ class ImageProcessor:
         marker_corners, marker_ids, rejected_corners = detector.detectMarkers(imgcopy)
         ret = False
 
+
         if marker_ids is not None:
             for i in range(len(marker_ids)):
-                ret, rvec, tvec = cv.solvePnP(markerPoints, marker_corners[i], matrix_coeffs, distortion_coeffs)
+                ret, rvec, tvec = cv.solvePnP(markerPoints, marker_corners[i], matrix_coeffs, distortion_coeffs, flags=cv.SOLVEPNP_IPPE_SQUARE)
                 if ret:
+                    rvec, tvec = cv.solvePnPRefineVVS(markerPoints, marker_corners, matrix_coeffs,
+                                                     distortion_coeffs, rvec, tvec)
+
                     r_vecs.append(rvec)
                     t_vecs.append(tvec)
-            ret = True
+                ret = True
 
         return ret, r_vecs, t_vecs
 
@@ -345,6 +350,15 @@ class ImageProcessor:
     def start_searching(self):
         pass
 
+
+    def create_charuco(self, checkboardSize, squarelength, markerlength, dictionary, folder):
+        arucodict = cv.aruco.getPredefinedDictionary(dictionary)
+        charboard = cv.aruco.CharucoBoard(checkboardSize, squarelength, markerlength, arucodict)
+        ratio = checkboardSize[1] / checkboardSize[0]
+        imboard = charboard.generateImage((1240, int(1240 * ratio)), marginSize=50)
+        cv.imwrite(folder / "charucoboard.jpg", imboard)
+        self.showimg(imboard, "charuco board")
+        return charboard
 
 
 

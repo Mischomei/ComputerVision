@@ -21,7 +21,7 @@ DEBUG = False
 #PathHandler
 handler = PathHandler.PathHandler()
 #testimage
-testimage = "image_9.jpg"
+testimage = "image_4.jpg"
 #ImageProcessor
 processor = ImageProcessor.ImageProcessor(debug=DEBUG)
 #ArucoDict
@@ -42,6 +42,10 @@ newcolors = [
 def pi_stereo():
     pi1 = Camera.Camera(debug=DEBUG)
     pi2 = Camera.Camera(debug=DEBUG)
+
+    handler.set_calibration_images_folder("example_data/new_calibration")
+    handler.set_image_folder("example_data/new_images")
+
     pi1.calibrate(handler.CALIB_FOLDER / "calibration_left", RESOLUTION, (13, 9))
     pi2.calibrate(handler.CALIB_FOLDER / "calibration_right", RESOLUTION, (13, 9))
     #pi1.save_settings(SETTINGS_FOLDER / "pi1")
@@ -49,10 +53,10 @@ def pi_stereo():
     #pi1.load_settings(SETTINGS_FOLDER / "pi1")
     #pi2.load_settings(SETTINGS_FOLDER / "pi2")
     picam = StereoCamera.StereoCamera(pi1, pi2, 5, 60.0)
-    img_left = cv.imread(handler.IMAGE_FOLDER /"container_left" / testimage)
-    img_right = cv.imread(handler.IMAGE_FOLDER / "container_right" / testimage)
-    undistored1 = processor.undistort(handler.IMAGE_FOLDER / "container_left", testimage, pi1, handler.SAVE_FOLDER)
-    undistored2 = processor.undistort(handler.IMAGE_FOLDER / "container_right", testimage, pi2, handler.SAVE_FOLDER)
+    img_left = cv.imread(handler.IMAGE_FOLDER /"new_images_left" / testimage)
+    img_right = cv.imread(handler.IMAGE_FOLDER / "new_images_right" / testimage)
+    undistored1 = processor.undistort(handler.IMAGE_FOLDER / "new_images_left", testimage, pi1, handler.SAVE_FOLDER)
+    undistored2 = processor.undistort(handler.IMAGE_FOLDER / "new_images_right", testimage, pi2, handler.SAVE_FOLDER)
     processor.showimg(undistored1, "u1")
     processor.showimg(undistored2, "u2")
     undistored1 = processor.rotate(processor.rotate(img_left))
@@ -132,30 +136,40 @@ def tryingPnP():
         outimg = processor.drawcontour(outimg, points, polyn, mask[1])
 
         ret, aruco_rvec, aruco_tvec = processor.aruco_pose_estimation(undistored1, cv.aruco.DICT_6X6_50, 0.051, pi1.newCameramatrix, pi1.dist-pi1.dist)
-        avg_rvec = np.average(aruco_rvec, axis=0)
+
         if ret:
+
+
             outimg =processor.pose_drawing(outimg, aruco_rvec, aruco_tvec, 0.051, pi1.newCameramatrix, pi1.dist - pi1.dist)
 
-        # if mask[1] == "green":
-        #     points = np.roll(points, 5, axis=0)
-        # elif mask[1] == "black":
-        #     points = np.roll(points, 6, axis=0)
-        # elif mask[1] == "cyan":
-        #     points = np.roll(points, 2, axis=0)
+
         ret, rvec, tvec = processor.trypnp(undistored1, container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist-pi1.dist, 0.1)
 
         rmat ,jac = cv.Rodrigues(rvec)
+        print(rvec)
+        print(tvec)
         print(rmat)
 
         if ret:
 
-            rvec, tvec = cv.solvePnPRefineLM(container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist-pi1.dist, rvec, tvec)
+            rvec, tvec = cv.solvePnPRefineVVS(container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist-pi1.dist, rvec, tvec)
+
             outimg = processor.pose_drawing(outimg, [rvec], [tvec], 0.04, pi1.cameraMatrix, pi1.dist - pi1.dist)
+            rmat = rmat
+
+
+
+
+            #d = (dist / normdist) * 0.385
+            #print(d)
+
+        outimg = cv.resize(outimg, (1200, 978))
         usedpolys.append(points.astype(np.int32))
+
     processor.showimg(outimg, "tryingPnP")
 
 def test_markers():
     processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 4, 600, 16)
 
 if __name__ == "__main__":
-    tryingPnP()
+    processor.create_charuco((7, 13), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
