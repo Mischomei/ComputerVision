@@ -149,7 +149,7 @@ class Camera:
                 marker_corners, marker_ids, _, _ = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
                 charuco_corners, charuco_ids, marker_corners, marker_ids = chardetector.detectBoard(img, markerCorners=marker_corners, markerIds=marker_ids)
                 objpts, imgpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
-                print(len(objpts))
+                print(f"{image}, objpoints: {len(objpts)}")
                 if len(charuco_ids)>0:
                     all_charuco_corners.append(charuco_corners)
                     all_charuco_ids.append(charuco_ids)
