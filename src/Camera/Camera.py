@@ -117,17 +117,19 @@ class Camera:
         arucodict = cv.aruco.getPredefinedDictionary(dictionary)
         params = cv.aruco.DetectorParameters()
         charparams = cv.aruco.CharucoParameters()
+        refinedparams = cv.aruco.RefineParameters()
+
 
         params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
 
         ardetector = cv.aruco.ArucoDetector(arucodict, params)
-        chardetector = cv.aruco.CharucoDetector(charboard, charparams, para,s)
+        chardetector = cv.aruco.CharucoDetector(charboard, charparams, params)
         objPoints = []
         imgPoints = []
         all_charuco_corners = []
         all_charuco_ids = []
         # Bilder für Kalibrierung // Calibration images
-
+        size=()
         images = list(folder.glob(f"*.{calibfilesdtype}"))
         for image in images:
             img = cv.imread(image)
@@ -136,8 +138,9 @@ class Camera:
             marker_corners, marker_ids, rejected_corners = ardetector.detectMarkers(img)
             if len(marker_ids) > 0:
                 cv.aruco.drawDetectedMarkers(image_copy, marker_corners, marker_ids)
-                marker_corners, marker_ids, rejected_corners = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
-                charuco_corners, charuco_ids = chardetector.detectBoard(img, markerCorners=marker_corners, markerids=marker_ids)
+
+                marker_corners, marker_ids, _, _ = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
+                charuco_corners, charuco_ids, marker_corners, marker_ids = chardetector.detectBoard(img, markerCorners=marker_corners, markerIds=marker_ids)
                 imgpts, objpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
                 if len(charuco_ids)>0:
                     all_charuco_corners.append(charuco_corners)

@@ -160,6 +160,9 @@ def test_markers():
     processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 4, 600, 16)
 
 if __name__ == "__main__":
-    processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
+    board = processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
+    pi1 = Camera.Camera()
+    handler.set_calibration_images_folder("example_data/new_calibration_charuco")
+    pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, cv.aruco.DICT_5X5_100)
     #pi_stereo()
     #tryingPnP()
