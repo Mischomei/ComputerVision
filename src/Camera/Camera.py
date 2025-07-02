@@ -122,8 +122,8 @@ class Camera:
 
         params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
 
-        ardetector = cv.aruco.ArucoDetector(arucodict, params)
-        chardetector = cv.aruco.CharucoDetector(charboard, charparams, params)
+        ardetector = cv.aruco.ArucoDetector(arucodict, params, refinedparams)
+        chardetector = cv.aruco.CharucoDetector(charboard, charparams, params, refinedparams)
         objPoints = []
         imgPoints = []
         all_charuco_corners = []
@@ -133,7 +133,7 @@ class Camera:
         images = list(folder.glob(f"*.{calibfilesdtype}"))
         for image in images:
             img = cv.imread(image)
-            size = img.shape[:2]
+            size = img.shape[:2][::-1]
             image_copy = img.copy()
             marker_corners, marker_ids, rejected_corners = ardetector.detectMarkers(img)
             if len(marker_ids) > 0:
@@ -141,13 +141,17 @@ class Camera:
 
                 marker_corners, marker_ids, _, _ = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
                 charuco_corners, charuco_ids, marker_corners, marker_ids = chardetector.detectBoard(img, markerCorners=marker_corners, markerIds=marker_ids)
-                imgpts, objpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
+                objpts, imgpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
                 if len(charuco_ids)>0:
                     all_charuco_corners.append(charuco_corners)
                     all_charuco_ids.append(charuco_ids)
+                    objpts = np.array(objpts, dtype=np.float32)
+                    imgpts = np.array(imgpts, dtype=np.float32)
                     objPoints.append(objpts)
                     imgPoints.append(imgpts)
-        retval, camera_matrix, dist_coeffs, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, size, None, None)
+
+        criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        retval, camera_matrix, dist_coeffs, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, size, None, None, flags=None, criteria=criteria)
 
         if retval:
             self.cameraMatrix = camera_matrix
@@ -157,6 +161,9 @@ class Camera:
             self.f = self.cameraMatrix[0, 0]
             self.imgPoints = imgPoints
             self.objPoints = objPoints
+            print(f"---Kamera kalibriert: {retval}---")
+        else:
+            print(f"---Kalibrierung fehlgeschlagen---")
 
 
 

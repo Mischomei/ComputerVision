@@ -21,22 +21,21 @@ DEBUG = True
 #PathHandler
 handler = PathHandler.PathHandler()
 #testimage
-testimage = "image_4.jpg"
+testimage = "image_15.jpg"
 #ImageProcessor
 processor = ImageProcessor.ImageProcessor(debug=DEBUG)
 #ArucoDict
 
 #Color HSV Ranges
-colors = [
-        (np.array([80.0, 20, 35]), np.array([100.0, 255, 255]), "green"),
-        (np.array([125.0, 110, 50]), np.array([160.0, 170, 230]), "red")
-              ]
 
-newcolors = [
-    (np.array([87.0, int(255*0.7), int(255*0.4)]), np.array([100.0, 255, int(255*0.78)]), "green"),
-    (np.array([110.0, int(255*0.45), int(255*0.3)]), np.array([113.5, int(255*0.82), int(255*0.62)]), "black"),
-    (np.array([130.0, int(255*0.5), int(255*0.45)]), np.array([170.0, int(255*0.82), int(255*0.85)]), "red"),
-    (np.array([88.5, int(255*0.5), int(255*0.35)]), np.array([97.0, int(255), int(255)]), "cyan")
+
+newercolors = [
+    (np.array([50.0, int(255*0.3), int(255*0.25)]), np.array([63.0, int(255*0.7), int(255*0.75)]), "green"),
+    (np.array([100.0, int(255*0.04), int(255*0.19)]), np.array([115.0, int(255*0.2), int(255*0.39)]), "black"),
+    (np.array([0.0, int(255*0.25), int(255*0.5)]), np.array([3.5, int(255*0.75), int(255*0.75)]), "red"),
+    (np.array([87.0, int(255*0.1), int(255*0.35)]), np.array([95.0, int(255*0.4), int(255*0.79)]), "blue"),
+    (np.array([31.0, int(255*0.25), int(255*0.3)]), np.array([35.0, int(255*0.65), int(255*0.85)]), "yellow"),
+    (np.array([0.0, int(255*0.15), int(255*0.4)]), np.array([180.0, int(255*0.4), int(255*0.8)]), "pink")
 ]
 
 def pi_stereo():
@@ -107,21 +106,23 @@ def webcam():
 
 
 def tryingPnP():
-    pi1 = Camera.Camera(debug=DEBUG)
+    #pi1 = Camera.Camera(debug=DEBUG)
 
-    handler.set_calibration_images_folder("example_data/new_calibration")
+    #handler.set_calibration_images_folder("example_data/new_calibration")
     handler.set_image_folder("example_data/new_images")
 
-    pi1.calibrate(handler.CALIB_FOLDER / "calibration_left", RESOLUTION, (13, 9))
+    #pi1.calibrate(handler.CALIB_FOLDER / "calibration_left", RESOLUTION, (13, 9))
+    board = processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
+    pi1 = Camera.Camera()
+    handler.set_calibration_images_folder("example_data/new_calibration_charuco")
+    pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, cv.aruco.DICT_5X5_100)
+
     img_left = cv.imread(handler.IMAGE_FOLDER /"new_images_left" / testimage)
-    img_left = processor.crop(img_left, 100, 2300, 0, 2700)
-    img_left = processor.rotate(processor.rotate(img_left))
     undistored1 = processor.undistort(handler.IMAGE_FOLDER / "new_images_left", testimage, pi1, handler.SAVE_FOLDER)
-    undistored1 = processor.crop(undistored1, 100, 2300, 0, 2700)
     undistored1 = processor.rotate(processor.rotate(undistored1))
-    undistored1 = cv.resize(undistored1, (1200, 978))
-    contouredimg = undistored1.copy()
-    masks = processor.createmasks(undistored1, newcolors)
+    #undistored1 = cv.resize(undistored1, (1800, 1000))
+
+    masks = processor.createmasks(undistored1, newercolors)
     masks = processor.maskstolist(masks)
     outimg = undistored1.copy()
 
@@ -154,15 +155,18 @@ def tryingPnP():
             #print(d)
         usedpolys.append(points.astype(np.int32))
 
+    outimg = cv.resize(outimg, (1800, 1000))
     processor.showimg(outimg, "tryingPnP")
+    cv.imwrite(handler.SAVE_FOLDER/"testoutimg.jpg", outimg)
 
 def test_markers():
     processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 4, 600, 16)
 
 if __name__ == "__main__":
-    board = processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
-    pi1 = Camera.Camera()
-    handler.set_calibration_images_folder("example_data/new_calibration_charuco")
-    pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, cv.aruco.DICT_5X5_100)
+    #board = processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
+    #pi1 = Camera.Camera()
+    #handler.set_calibration_images_folder("example_data/new_calibration_charuco")
+    #pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, cv.aruco.DICT_5X5_100)
+
     #pi_stereo()
-    #tryingPnP()
+    tryingPnP()

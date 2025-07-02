@@ -47,7 +47,7 @@ class ImageProcessor:
 
 
     def get_color_channels(self, img, mask):
-        distparam = 5
+        distparam = 10
         img_copy = img.copy()
         b, g, r = cv.split(img_copy)
         blank = np.zeros(img.shape[:2], dtype="uint8")
