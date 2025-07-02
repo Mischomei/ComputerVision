@@ -121,8 +121,12 @@ class Camera:
 
 
         params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
-
+        params.adaptiveThreshWinSizeMax = 100
+        params.minMarkerPerimeterRate = 0.02
+        params.minCornerDistanceRate = 0.04
         ardetector = cv.aruco.ArucoDetector(arucodict, params, refinedparams)
+
+
         chardetector = cv.aruco.CharucoDetector(charboard, charparams, params, refinedparams)
         objPoints = []
         imgPoints = []
@@ -138,10 +142,14 @@ class Camera:
             marker_corners, marker_ids, rejected_corners = ardetector.detectMarkers(img)
             if len(marker_ids) > 0:
                 cv.aruco.drawDetectedMarkers(image_copy, marker_corners, marker_ids)
-
+                image_copy = cv.resize(image_copy, (1800, 1000))
+                cv.imshow("Charuco", image_copy)
+                cv.waitKey(0)
+                cv.destroyWindow("Charuco")
                 marker_corners, marker_ids, _, _ = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
                 charuco_corners, charuco_ids, marker_corners, marker_ids = chardetector.detectBoard(img, markerCorners=marker_corners, markerIds=marker_ids)
                 objpts, imgpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
+                print(len(objpts))
                 if len(charuco_ids)>0:
                     all_charuco_corners.append(charuco_corners)
                     all_charuco_ids.append(charuco_ids)

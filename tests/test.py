@@ -21,7 +21,7 @@ DEBUG = True
 #PathHandler
 handler = PathHandler.PathHandler()
 #testimage
-testimage = "image_15.jpg"
+testimage = "image_16.jpg"
 #ImageProcessor
 processor = ImageProcessor.ImageProcessor(debug=DEBUG)
 #ArucoDict
@@ -45,8 +45,12 @@ def pi_stereo():
     handler.set_calibration_images_folder("example_data/new_calibration")
     handler.set_image_folder("example_data/new_images")
 
-    pi1.calibrate(handler.CALIB_FOLDER / "calibration_left", RESOLUTION, (13, 9))
-    pi2.calibrate(handler.CALIB_FOLDER / "calibration_right", RESOLUTION, (13, 9))
+    board = processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
+    handler.set_calibration_images_folder("example_data/new_calibration_charuco")
+    pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, cv.aruco.DICT_5X5_100)
+    pi2.calibrate_charuco(handler.CALIB_FOLDER / "calibration_right", board, cv.aruco.DICT_5X5_100)
+    #pi1.calibrate(handler.CALIB_FOLDER / "calibration_left", RESOLUTION, (13, 9))
+    #pi2.calibrate(handler.CALIB_FOLDER / "calibration_right", RESOLUTION, (13, 9))
     #pi1.save_settings(SETTINGS_FOLDER / "pi1")
     #pi2.save_settings(SETTINGS_FOLDER / "pi2")
     #pi1.load_settings(SETTINGS_FOLDER / "pi1")
@@ -67,42 +71,23 @@ def pi_stereo():
     #picam.read_map(handler.SETTINGS_FOLDER / "stereo")
     stereoproc = StereoProcessor(debug=DEBUG)
     # Image undistortion Rectification
-    #img_left = cv.imread(IMAGE_FOLDER / "container_left" / testimage)
     undistorted_left, undistorted_right = stereoproc.undistort_rectify(img_left, img_right, picam)
-    #undistorted_left = processor.crop(undistorted_left, 300, 900, 400, 1400)
-    #undistorted_right = processor.crop(undistorted_right, 350, 1050, 300, 1300)
 
-    processor.showimg(undistorted_left, "left")
-    processor.showimg(undistorted_right, "right")
+    undistorted_left_c = cv.resize(undistorted_left.copy(), (1800, 1000))
+    undistorted_right_c = cv.resize(undistorted_right.copy(), (1800, 1000))
+    processor.showimg(undistorted_left_c, "left")
+    processor.showimg(undistorted_right_c, "right")
     #undistorted_left, undistorted_right = undistored1, undistored2
 
 
-    masks = stereoproc.combine_masks(processor.createmasks(undistorted_left, newcolors), processor.createmasks(undistorted_right, newcolors))
+    masks = stereoproc.combine_masks(processor.createmasks(undistorted_left, newercolors), processor.createmasks(undistorted_right, newcolors))
     framer, framel = stereoproc.cons_stereo(undistorted_left, undistorted_right, masks)
-    framel = cv.resize(framel, (1000, 1000))
+    framel = cv.resize(framel, (1800, 1000))
     processor.showimg(framel, "framel")
     cv.imwrite(os.path.join(handler.SAVE_FOLDER.as_posix(), "frame_left.jpg"), framel)
     cv.imwrite(os.path.join(handler.SAVE_FOLDER.as_posix(), "frame_right.jpg"), framer)
     #stereoproc.find_depth(p2, p1, undistorted_left, undistorted_right, picam)
 
-
-def webcam():
-    cam = Camera.Camera(debug=DEBUG)
-    cam.calibrate(handler.DATA_PATH / "images/calibration_laptopweb1", (1280, 720), (13, 9))
-    cam.save_settings(handler.SETTINGS_FOLDER / "webcam1")
-    capt = cv.VideoCapture(0)
-    while True:
-        ret, frame = capt.read()
-        if ret:
-            ret2, r_vecs, t_vecs = processor.aruco_pose_estimation(frame, cv.aruco.DICT_6X6_50, 0.2, cam.cameraMatrix, cam.dist)
-            if ret2:
-                frame = processor.pose_drawing(frame, r_vecs, t_vecs, 0.2, cam.cameraMatrix, cam.dist)
-            cv.imshow("Aruco", frame)
-
-        if cv.waitKey(1) == ord('q'):
-            break
-    capt.release()
-    cv.destroyAllWindows()
 
 
 def tryingPnP():
@@ -120,7 +105,6 @@ def tryingPnP():
     img_left = cv.imread(handler.IMAGE_FOLDER /"new_images_left" / testimage)
     undistored1 = processor.undistort(handler.IMAGE_FOLDER / "new_images_left", testimage, pi1, handler.SAVE_FOLDER)
     undistored1 = processor.rotate(processor.rotate(undistored1))
-    #undistored1 = cv.resize(undistored1, (1800, 1000))
 
     masks = processor.createmasks(undistored1, newercolors)
     masks = processor.maskstolist(masks)
@@ -168,5 +152,5 @@ if __name__ == "__main__":
     #handler.set_calibration_images_folder("example_data/new_calibration_charuco")
     #pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, cv.aruco.DICT_5X5_100)
 
-    #pi_stereo()
-    tryingPnP()
+    pi_stereo()
+    #tryingPnP()
