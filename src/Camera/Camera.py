@@ -57,11 +57,11 @@ class Camera:
         cv.destroyAllWindows()
 
         # Kalibrierung // Calibration
-
-        ret, cameraMatrix, dist, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, res, None, None)
         height, width, channels = img.shape
-        newCameramatrix, roi = cv.getOptimalNewCameraMatrix(cameraMatrix, dist, (width, height), 1, (width, height))
+        ret, cameraMatrix, dist, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, (width, height), None, None)
 
+        newCameramatrix, roi = cv.getOptimalNewCameraMatrix(cameraMatrix, dist, (width, height), 1, (width, height))
+        newCameramatrix = cameraMatrix
         if ret:
             self.cameraMatrix = cameraMatrix
             self.newCameramatrix = newCameramatrix

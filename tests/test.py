@@ -17,7 +17,7 @@ container_points2 = np.array([[0, 0, 0], [0, 0.037, 0], [0, 0.037, 0.045], [0.07
 #Resolution
 RESOLUTION = (1920, 1080)
 #Debug
-DEBUG = False
+DEBUG = True
 #PathHandler
 handler = PathHandler.PathHandler()
 #testimage
@@ -59,27 +59,29 @@ def pi_stereo():
     undistored2 = processor.undistort(handler.IMAGE_FOLDER / "new_images_right", testimage, pi2, handler.SAVE_FOLDER)
     processor.showimg(undistored1, "u1")
     processor.showimg(undistored2, "u2")
-    undistored1 = processor.rotate(processor.rotate(img_left))
-    undistored2 = processor.rotate(processor.rotate(img_right))
+    img_left = processor.rotate(processor.rotate(img_left))
+    img_right = processor.rotate(processor.rotate(img_right))
 
 
-    #picam.stereo_calibration_rectification(undistored1.shape[:-1][::-1])
-    #picam.save_map(SETTINGS_FOLDER / "stereo")
-    picam.read_map(handler.SETTINGS_FOLDER / "stereo")
+    picam.stereo_calibration_rectification(img_left.shape[:-1][::-1])
+    picam.save_map(handler.SETTINGS_FOLDER / "stereo")
+    #picam.read_map(handler.SETTINGS_FOLDER / "stereo")
     stereoproc = StereoProcessor(debug=DEBUG)
     # Image undistortion Rectification
     #img_left = cv.imread(IMAGE_FOLDER / "container_left" / testimage)
-    undistorted_left, undistorted_right = stereoproc.undistort_rectify(undistored1, undistored2, picam)
-    undistorted_left = processor.crop(undistorted_left, 300, 900, 400, 1400)
-    undistorted_right = processor.crop(undistorted_right, 350, 1050, 300, 1300)
+    undistorted_left, undistorted_right = stereoproc.undistort_rectify(img_left, img_right, picam)
+    #undistorted_left = processor.crop(undistorted_left, 300, 900, 400, 1400)
+    #undistorted_right = processor.crop(undistorted_right, 350, 1050, 300, 1300)
 
     processor.showimg(undistorted_left, "left")
     processor.showimg(undistorted_right, "right")
     #undistorted_left, undistorted_right = undistored1, undistored2
 
 
-    masks = stereoproc.combine_masks(processor.createmasks(undistorted_left, colors), processor.createmasks(undistorted_right, colors))
+    masks = stereoproc.combine_masks(processor.createmasks(undistorted_left, newcolors), processor.createmasks(undistorted_right, newcolors))
     framer, framel = stereoproc.cons_stereo(undistorted_left, undistorted_right, masks)
+    framel = cv.resize(framel, (1000, 1000))
+    processor.showimg(framel, "framel")
     cv.imwrite(os.path.join(handler.SAVE_FOLDER.as_posix(), "frame_left.jpg"), framel)
     cv.imwrite(os.path.join(handler.SAVE_FOLDER.as_posix(), "frame_right.jpg"), framer)
     #stereoproc.find_depth(p2, p1, undistorted_left, undistorted_right, picam)
@@ -135,35 +137,21 @@ def tryingPnP():
 
         outimg = processor.drawcontour(outimg, points, polyn, mask[1])
 
-        ret, aruco_rvec, aruco_tvec = processor.aruco_pose_estimation(undistored1, cv.aruco.DICT_6X6_50, 0.051, pi1.newCameramatrix, pi1.dist-pi1.dist)
+        ret, aruco_rvec, aruco_tvec = processor.aruco_pose_estimation(undistored1, cv.aruco.DICT_6X6_50, 0.051, pi1.cameraMatrix, pi1.dist-pi1.dist)
 
         if ret:
 
 
-            outimg =processor.pose_drawing(outimg, aruco_rvec, aruco_tvec, 0.051, pi1.newCameramatrix, pi1.dist - pi1.dist)
-
+            outimg =processor.pose_drawing(outimg, aruco_rvec, aruco_tvec,  0.051, pi1.cameraMatrix, pi1.dist - pi1.dist)
 
         ret, rvec, tvec = processor.trypnp(undistored1, container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist-pi1.dist, 0.1)
 
-        rmat ,jac = cv.Rodrigues(rvec)
-        print(rvec)
-        print(tvec)
-        print(rmat)
 
         if ret:
-
-            rvec, tvec = cv.solvePnPRefineVVS(container_points, points.astype(np.float64), pi1.cameraMatrix, pi1.dist-pi1.dist, rvec, tvec)
-
             outimg = processor.pose_drawing(outimg, [rvec], [tvec], 0.04, pi1.cameraMatrix, pi1.dist - pi1.dist)
-            rmat = rmat
-
-
-
 
             #d = (dist / normdist) * 0.385
             #print(d)
-
-        outimg = cv.resize(outimg, (1200, 978))
         usedpolys.append(points.astype(np.int32))
 
     processor.showimg(outimg, "tryingPnP")
@@ -172,4 +160,6 @@ def test_markers():
     processor.generate_aruco(handler.SAVE_FOLDER, cv.aruco.DICT_6X6_50, 4, 600, 16)
 
 if __name__ == "__main__":
-    processor.create_charuco((7, 13), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
+    processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
+    #pi_stereo()
+    #tryingPnP()

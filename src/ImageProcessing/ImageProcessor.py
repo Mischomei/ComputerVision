@@ -26,9 +26,9 @@ class ImageProcessor:
         h,w = img.shape[:2]
 
         #Optimisierung der Kameramatrix passend zur Auflösung des Bildes
-        newcameramatrix, roi = cv.getOptimalNewCameraMatrix(camera.newCameramatrix, camera.dist, (w,h), 1, (w, h))
+        newcameramatrix, roi = cv.getOptimalNewCameraMatrix(camera.cameraMatrix, camera.dist, (w,h), 1, (w, h))
         #Unverzerrung
-        dest = cv.undistort(img, camera.newCameramatrix, camera.dist, None, newcameramatrix)
+        dest = cv.undistort(img, camera.cameraMatrix, camera.dist, None, newcameramatrix)
         x, y, w, h = roi
         dest = dest[y:y+h, x:x+w]
         if destFolder:
@@ -253,7 +253,14 @@ class ImageProcessor:
     #Anzeigen des Bildes
     @staticmethod
     def showimg(img, name):
-        cv.imshow(name, img)
+        copy = img.copy()
+        # if copy.shape[0] > 1920:
+        #     factor = 1920/copy.shape[0]
+        #     copy = cv.resize(copy, None, fx=factor, fy=factor, interpolation=cv.INTER_LINEAR)
+        # if copy.shape[1] > 1080:
+        #     factor = 1080/copy.shape[1]
+        #     copy = cv.resize(copy, None, fx=factor, fy=factor, interpolation=cv.INTER_LINEAR)
+        cv.imshow(name, copy)
         cv.waitKey(0)
         cv.destroyWindow(name)
 
@@ -281,9 +288,32 @@ class ImageProcessor:
 
 
     #Eigentlich unnötig, lasse ich vlt für noch irgendwas
-    def detect_aruco(self):
-        pass
+    def detect_aruco(self, img, aruco_dict_type):
+        aruco_dict = aruco.getPredefinedDictionary(aruco_dict_type)
+        params = aruco.DetectorParameters()
+        # params.adaptiveThreshConstant = 3
+        # params.aprilTagCriticalRad = 0
+        # params.aprilTagMaxNmaxima = 15
+        # params.aprilTagMinWhiteBlackDiff = 0
+        params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
+        # params.cornerRefinementMaxIterations = 50
+        # params.errorCorrectionRate = 0.9
+        # params.polygonalApproxAccuracyRate = 0.1
+        # params.useAruco3Detection = True
+        params.adaptiveThreshWinSizeMin = 3
+        params.adaptiveThreshWinSizeMax = 300
+        # params.minMarkerPerimeterRate = 0.01
+        params.adaptiveThreshConstant = 2
+        # params.adaptiveThreshWinSizeStep = 10
+        # params.perspectiveRemovePixelPerCell = 10
+        # params.perspectiveRemoveIgnoredMarginPerCell = 0.05
+        # params.minMarkerPerimeterRate =
+        detector = aruco.ArucoDetector(aruco_dict, params)
+        imgcopy = img.copy()
+        # gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
 
+        marker_corners, marker_ids, rejected_corners = detector.detectMarkers(imgcopy)
+        return marker_corners, marker_ids
 
     def aruco_pose_estimation(self, img, aruco_dict_type, marker_size, matrix_coeffs, distortion_coeffs):
         r_vecs, t_vecs = list(), list()
@@ -322,10 +352,8 @@ class ImageProcessor:
 
         if marker_ids is not None:
             for i in range(len(marker_ids)):
-                ret, rvec, tvec = cv.solvePnP(markerPoints, marker_corners[i], matrix_coeffs, distortion_coeffs, flags=cv.SOLVEPNP_IPPE_SQUARE)
+                ret, rvec, tvec = cv.solvePnP(markerPoints, marker_corners[i], matrix_coeffs, distortion_coeffs)
                 if ret:
-                    rvec, tvec = cv.solvePnPRefineVVS(markerPoints, marker_corners, matrix_coeffs,
-                                                     distortion_coeffs, rvec, tvec)
 
                     r_vecs.append(rvec)
                     t_vecs.append(tvec)
@@ -355,7 +383,7 @@ class ImageProcessor:
         arucodict = cv.aruco.getPredefinedDictionary(dictionary)
         charboard = cv.aruco.CharucoBoard(checkboardSize, squarelength, markerlength, arucodict)
         ratio = checkboardSize[1] / checkboardSize[0]
-        imboard = charboard.generateImage((1240, int(1240 * ratio)), marginSize=50)
+        imboard = charboard.generateImage((1500, int(1500 * ratio)), marginSize=50)
         cv.imwrite(folder / "charucoboard.jpg", imboard)
         self.showimg(imboard, "charuco board")
         return charboard
