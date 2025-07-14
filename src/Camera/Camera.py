@@ -6,6 +6,9 @@ import json
 import time
 from pathlib import Path
 
+from src.ImageProcessing.ImageProcessor import ImageProcessor
+
+
 # Kamera Klasse
 class Camera:
     debug=False
@@ -113,7 +116,7 @@ class Camera:
 
         print("---Kamera Parameter gespeichert---")
 
-    def calibrate_charuco(self, folder, charboard, dictionary, calibfilesdtype="jpg"):
+    def calibrate_charuco(self, folder, charboard, charboard2, dictionary, calibfilesdtype="jpg" ):
         arucodict = cv.aruco.getPredefinedDictionary(dictionary)
         params = cv.aruco.DetectorParameters()
         charparams = cv.aruco.CharucoParameters()
@@ -121,13 +124,15 @@ class Camera:
 
 
         params.cornerRefinementMethod = cv.aruco.CORNER_REFINE_SUBPIX
-        params.adaptiveThreshWinSizeMax = 100
+        params.adaptiveThreshWinSizeMax = 150
         params.minMarkerPerimeterRate = 0.02
         params.minCornerDistanceRate = 0.04
         ardetector = cv.aruco.ArucoDetector(arucodict, params, refinedparams)
 
 
         chardetector = cv.aruco.CharucoDetector(charboard, charparams, params, refinedparams)
+        chardetector2 = cv.aruco.CharucoDetector(charboard2, charparams, params, refinedparams)
+
         objPoints = []
         imgPoints = []
         all_charuco_corners = []
@@ -141,14 +146,20 @@ class Camera:
             image_copy = img.copy()
             marker_corners, marker_ids, rejected_corners = ardetector.detectMarkers(img)
             if len(marker_ids) > 0:
-                cv.aruco.drawDetectedMarkers(image_copy, marker_corners, marker_ids)
-                image_copy = cv.resize(image_copy, (1800, 1000))
-                cv.imshow("Charuco", image_copy)
-                cv.waitKey(0)
-                cv.destroyWindow("Charuco")
-                marker_corners, marker_ids, _, _ = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
-                charuco_corners, charuco_ids, marker_corners, marker_ids = chardetector.detectBoard(img, markerCorners=marker_corners, markerIds=marker_ids)
-                objpts, imgpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
+
+                marker_corners2, marker_ids2, _, _ = ardetector.refineDetectedMarkers(img, charboard, marker_corners, marker_ids, rejected_corners)
+                charuco_corners, charuco_ids, marker_corners2, marker_ids2 = chardetector.detectBoard(img, markerCorners=marker_corners2, markerIds=marker_ids2)
+
+                try:
+                    objpts, imgpts = charboard.matchImagePoints(charuco_corners, charuco_ids)
+                except:
+                    marker_corners2, marker_ids2, _, _ = ardetector.refineDetectedMarkers(img, charboard2,
+                                                                                          marker_corners, marker_ids,
+                                                                                          rejected_corners)
+                    charuco_corners, charuco_ids, marker_corners2, marker_ids2 = chardetector2.detectBoard(img,
+                                                                                                          markerCorners=marker_corners2,
+                                                                                                          markerIds=marker_ids2)
+                    objpts, imgpts = charboard2.matchImagePoints(charuco_corners, charuco_ids)
                 print(f"{image}, objpoints: {len(objpts)}")
                 if len(charuco_ids)>0:
                     all_charuco_corners.append(charuco_corners)

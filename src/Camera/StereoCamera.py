@@ -19,6 +19,17 @@ class StereoCamera(Camera):
 
     def stereo_calibration_rectification(self, res, flags = None):
         #Stereo-Kalibrierung mit zwei Kameras // Stereocalibration with 2 cameras
+        i=0
+        while i < len(self.left_camera.objPoints):
+            if len(self.left_camera.objPoints[i]) != len(self.right_camera.objPoints[i]):
+                del self.right_camera.objPoints[i]
+                del self.left_camera.objPoints[i]
+                del self.right_camera.imgPoints[i]
+                del self.left_camera.imgPoints[i]
+                i-=1
+            i+=1
+
+        flags =  cv.CALIB_FIX_INTRINSIC+ cv.CALIB_SAME_FOCAL_LENGTH+ cv.CALIB_ZERO_TANGENT_DIST
         criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         retStereo, newCameraMatrixL, distL, newCameraMatrixR, distR, R, T, E, F = cv.stereoCalibrate(self.left_camera.objPoints, self.left_camera.imgPoints, self.right_camera.imgPoints, self.left_camera.cameraMatrix, self.left_camera.dist, self.right_camera.cameraMatrix, self.right_camera.dist, res, criteria=criteria_stereo, flags=flags)
 

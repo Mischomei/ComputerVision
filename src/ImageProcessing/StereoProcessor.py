@@ -22,10 +22,10 @@ class StereoProcessor(ImageProcessor):
         heightr, widthr, depthr = frame_right.shape
         heightl, widthl, depthl = frame_left.shape
 
-        if widthl == widthr:
-            f_pixel = (widthr * 0.5) / np.tan(stereocam.alpha * 0.5 * np.pi / 180)
-        else:
-            f_pixel = stereocam.left_camera.f
+        #if widthl == widthr:
+            #f_pixel = (widthr * 0.5) / np.tan(stereocam.alpha * 0.5 * np.pi / 180)
+        #else:
+        f_pixel = stereocam.left_camera.cameraMatrix[0, 0]
 
         xr = pr
         xl = pl
@@ -44,11 +44,11 @@ class StereoProcessor(ImageProcessor):
             leftmasks.append((mask[0], mask[2]))
             rightmasks.append((mask[1], mask[2]))
 
-        rightimg = self.cons_per_color(imgcopyr, rightmasks)
+        rightimg, rightpoints = self.cons_per_color(imgcopyr, rightmasks)
         if self.debug: self.showimg(rightimg, "cons_stereo_right")
-        leftimg = self.cons_per_color(imgcopyl, leftmasks)
+        leftimg, leftpoints = self.cons_per_color(imgcopyl, leftmasks)
         if self.debug: self.showimg(leftimg, "cons_stereo_left")
-        return rightimg, leftimg
+        return rightimg, leftimg, rightpoints, leftpoints
 
 
     def combine_masks(self, leftmasks, rightmasks):

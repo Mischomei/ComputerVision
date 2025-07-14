@@ -90,20 +90,29 @@ class ImageProcessor:
             arc = cv.arcLength(c, True)
             eps = eps * arc
 
-        #poly = cv.approxPolyDP(c, 0.02 * cv.arcLength(c, True), True)
-        poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]), epsilon_percentage=eps, ensure_convex=True)
 
+        #poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]), epsilon_percentage=eps, ensure_convex=True)
+
+        poly = cv.approxPolyDP(c, 0.006 * cv.arcLength(c, True), True, approxCurve=np.ndarray([]))
+        outpoly = poly.astype(int)
+        outpoly = np.array([out[0] for out in outpoly])
+        if len(outpoly) >= 5:
+            poly = cv.approxPolyN(c, 6, approxCurve=np.ndarray([]), epsilon_percentage=eps, ensure_convex=True)
+        elif len(outpoly) <= 4:
+            poly = cv.approxPolyN(c, 4, approxCurve=np.ndarray([]), epsilon_percentage=eps, ensure_convex=True)
+        outpoly = poly[0].astype(int)
         #debug
-        if self.debug: print(poly)
+
 
         #sorting so corner at bottom is 0
         maxpoly = (0, 0)
         maxlen = 0
         index = 0
-        outpoly = poly[0].astype(int)
-        #outpoly = np.flip(outpoly, axis=0)
-        for i in range(1, len(outpoly) + 1):
-            vec = outpoly[i] - outpoly[i-1] if i <=5 else outpoly[0] - outpoly[i-1]
+
+        print(outpoly)
+        for i in range(1, len(outpoly) ):
+
+            vec = outpoly[i] - outpoly[i-1] if i <=len(outpoly)-1 else outpoly[0] - outpoly[i-1]
             lenvec = np.linalg.norm(vec, ord=2)
             if lenvec >= maxlen*0.9:
                 index = i-1
@@ -238,22 +247,23 @@ class ImageProcessor:
     def cons_per_color(self, img, masks):
         copyimg = img.copy()
         outimg = img.copy()
-
+        outpoints = []
         for mask in masks:
             edges = self.get_color_channels(copyimg, mask[0])
             polyn, points = self.lines(edges)
+            outpoints.append(points)
             outimg = self.drawcontour(outimg, points, polyn, mask[1])
 
         #debug
         if self.debug: self.showimg(outimg, "cons_per_color")
 
-        return outimg
+        return outimg, outpoints
 
 
     #Anzeigen des Bildes
-    @staticmethod
-    def showimg(img, name):
+    def showimg(self, img, name):
         copy = img.copy()
+        copy = self.rotate(self.rotate(copy))
         # if copy.shape[0] > 1920:
         #     factor = 1920/copy.shape[0]
         #     copy = cv.resize(copy, None, fx=factor, fy=factor, interpolation=cv.INTER_LINEAR)
@@ -347,6 +357,7 @@ class ImageProcessor:
         #gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
 
         marker_corners, marker_ids, rejected_corners = detector.detectMarkers(imgcopy)
+        print(marker_ids)
         ret = False
 
 
