@@ -12,7 +12,6 @@ from PiCamera.Picamera import Picamera
 
 from ImageProcessing.StereoProcessor import StereoProcessor
 from extras import PathHandler
-from extras.CursesHandler import CursesHandler
 
 import os
 

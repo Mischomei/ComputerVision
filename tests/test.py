@@ -21,7 +21,7 @@ DEBUG = False
 #PathHandler
 handler = PathHandler.PathHandler()
 #testimage
-testimage = "image_15.jpg"
+testimage = "image_20.jpg"
 #ImageProcessor
 processor = ImageProcessor.ImageProcessor(debug=DEBUG)
 #ArucoDict
@@ -30,9 +30,9 @@ processor = ImageProcessor.ImageProcessor(debug=DEBUG)
 
 
 newercolors = [
-    (np.array([50.0, int(255*0.3), int(255*0.25)]), np.array([66.0, int(255*0.7), int(255*0.75)]), "green"),
+    (np.array([50.0, int(255*0.3), int(255*0.25)]), np.array([74.0, int(255*0.85), int(255*0.75)]), "green"),
     #(np.array([100.0, int(255*0.04), int(255*0.19)]), np.array([115.0, int(255*0.2), int(255*0.39)]), "black"),
-    (np.array([0.0, int(255*0.25), int(255*0.3)]), np.array([180.0, int(255*0.75), int(255*0.79)]), "red"),
+    (np.array([0.0, int(255*0.25), int(255*0.3)]), np.array([180.0, int(255*0.8), int(255*0.8)]), "red"),
     (np.array([83.0, int(255*0.1), int(255*0.30)]), np.array([99.0, int(255*0.4), int(255*0.79)]), "blue"),
     (np.array([31.0, int(255*0.25), int(255*0.3)]), np.array([39.0, int(255*0.65), int(255*0.85)]), "yellow"),
     (np.array([0.0, int(255*0.15), int(255*0.4)]), np.array([180.0, int(255*0.4), int(255*0.8)]), "pink")
@@ -81,16 +81,7 @@ def pi_stereo():
     framer, framel, pr, pl = stereoproc.cons_stereo(undistorted_left, undistorted_right, masks)
 
     markercorners, markerids = processor.detect_aruco(framel, cv.aruco.DICT_6X6_50)
-    dists = []
-    if len(pr) == len(pl):
 
-        for i in range(len(pr)):
-
-
-            dist = stereoproc.find_depth(pr[i][0], pl[i][0], undistorted_left, undistorted_right, picam)
-            pos = stereoproc.calcdist(markercorners[0], markercorners[1], pl[i][0]. pl[i][1])
-            print(pos)
-            dists.append(pos)
 
 
 
@@ -101,8 +92,6 @@ def pi_stereo():
     cv.imwrite(os.path.join(handler.SAVE_FOLDER.as_posix(), "frame_left.jpg"), framel)
     cv.imwrite(os.path.join(handler.SAVE_FOLDER.as_posix(), "frame_right.jpg"), framer)
     #stereoproc.find_depth(p2, p1, undistorted_left, undistorted_right, picam)
-    return dists
-
 
 def tryingPnP():
     #pi1 = Camera.Camera(debug=DEBUG)

@@ -310,10 +310,10 @@ class ImageProcessor:
         # params.errorCorrectionRate = 0.9
         # params.polygonalApproxAccuracyRate = 0.1
         # params.useAruco3Detection = True
-        params.adaptiveThreshWinSizeMin = 3
-        params.adaptiveThreshWinSizeMax = 300
+        #params.adaptiveThreshWinSizeMin = 3
+        #params.adaptiveThreshWinSizeMax = 150
         # params.minMarkerPerimeterRate = 0.01
-        params.adaptiveThreshConstant = 2
+        #params.adaptiveThreshConstant = 3
         # params.adaptiveThreshWinSizeStep = 10
         # params.perspectiveRemovePixelPerCell = 10
         # params.perspectiveRemoveIgnoredMarginPerCell = 0.05
