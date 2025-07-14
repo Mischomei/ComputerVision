@@ -393,9 +393,6 @@ class ImageProcessor:
         arucodict = cv.aruco.getPredefinedDictionary(dictionary)
         charboard = cv.aruco.CharucoBoard(checkboardSize, squarelength, markerlength, arucodict)
         ratio = checkboardSize[1] / checkboardSize[0]
-        imboard = charboard.generateImage((1500, int(1500 * ratio)), marginSize=50)
-        cv.imwrite(folder / "charucoboard.jpg", imboard)
-        self.showimg(imboard, "charuco board")
         return charboard
 
 
