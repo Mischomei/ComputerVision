@@ -80,10 +80,15 @@ def pi_stereo():
     masks = stereoproc.combine_masks(processor.createmasks(undistorted_left, newercolors), processor.createmasks(undistorted_right, newercolors))
     framer, framel, pr, pl = stereoproc.cons_stereo(undistorted_left, undistorted_right, masks)
 
+    markercorners, markerids = processor.detect_aruco(framel, cv.aruco.DICT_6X6_50)
+
     if len(pr) == len(pl):
         for i in range(len(pr)):
+
+
             dist = stereoproc.find_depth(pr[i][0], pl[i][0], undistorted_left, undistorted_right, picam)
-            print(dist)
+            pos = stereoproc.calcdist(markercorners[0], markercorners[1], pl[i][0]. pl[i][1])
+            print(pos)
 
 
     framel = cv.resize(framel, (1800, 1000))

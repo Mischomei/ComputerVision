@@ -35,6 +35,25 @@ class StereoProcessor(ImageProcessor):
         print(f"Distanz Kamera-Punkt: {abs(zD)}")
         return abs(zD)
 
+    def calcdist(self, ap1, ap2, p1, p2):
+        apdist = 0.4
+        vec1 = ap2 - ap1
+        vec2 = p1 - ap1
+
+        deg = np.arccos(np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2)))
+
+        rel = np.linalg.norm(abs(ap1- ap2), ord=2) / apdist
+
+        distpap = np.linalg.norm(abs(p1 - ap1), ord=2) * rel
+        x = distpap * np.cos(deg)
+        y = distpap * np.sin(deg)
+
+
+        return (x, y)
+
+
+
+
     def cons_stereo(self, imgleft, imgright, masks):
         imgcopyr = imgright.copy()
         imgcopyl = imgleft.copy()

@@ -321,7 +321,6 @@ class ImageProcessor:
         detector = aruco.ArucoDetector(aruco_dict, params)
         imgcopy = img.copy()
         # gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
-
         marker_corners, marker_ids, rejected_corners = detector.detectMarkers(imgcopy)
         return marker_corners, marker_ids
 
@@ -355,8 +354,8 @@ class ImageProcessor:
         detector = aruco.ArucoDetector(aruco_dict, params)
         imgcopy = img.copy()
         #gray = cv.cvtColor(imgcopy, cv.COLOR_BGR2GRAY)
-
         marker_corners, marker_ids, rejected_corners = detector.detectMarkers(imgcopy)
+
         print(marker_ids)
         ret = False
 
