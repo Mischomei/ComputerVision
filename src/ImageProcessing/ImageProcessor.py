@@ -6,6 +6,9 @@ import numpy as np
 import imutils
 import os
 from pathlib import Path
+
+from numpy.f2py.auxfuncs import throw_error
+
 from src.extras.trigonometry import len_line
 from cv2 import aruco
 
@@ -79,13 +82,15 @@ class ImageProcessor:
         return combthresh
 
 
-    def lines(self, edge, eps=-1):
+    def lines(self, edge, eps=-1, imgsize = 4500*2500):
 
         #Approxpoly
         cons = cv.findContours(edge, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
         cons = imutils.grab_contours(cons)
         c = max(cons, key=cv.contourArea)
-
+        print(c)
+        if cv.contourArea(c) / imgsize < 0.0035:
+            return None, None
         if eps != -1:
             arc = cv.arcLength(c, True)
             eps = eps * arc
@@ -169,9 +174,26 @@ class ImageProcessor:
     def create_mask(self, img, lower, upper):
         img_copy = img.copy()
         img_copy = cv.cvtColor(img_copy, cv.COLOR_BGR2HSV)
-        mask = cv.inRange(img_copy, lower, upper)
-        mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
-        mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
+
+
+
+
+        if lower.shape == (3, ) and upper.shape == (3, ):
+            mask = cv.inRange(img_copy, lower, upper)
+            mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
+            mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
+        else:
+            if len(lower) == len(upper):
+                masks = list()
+                for i in range(len(lower)):
+                    tmp = cv.inRange(img_copy, lower[i], upper[i])
+                    masks.append(tmp)
+                mask = cv.bitwise_or(*masks)
+                mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
+                mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
+            else:
+                throw_error("Range of lower and upper must be equal")
+
         if self.debug: self.showimg(mask, "created mask")
 
         return mask
@@ -251,8 +273,11 @@ class ImageProcessor:
         for mask in masks:
             edges = self.get_color_channels(copyimg, mask[0])
             polyn, points = self.lines(edges)
-            outpoints.append(points)
-            outimg = self.drawcontour(outimg, points, polyn, mask[1])
+            if points is not None:
+                outpoints.append(points)
+                outimg = self.drawcontour(outimg, points, polyn, mask[1])
+            else:
+                print("Fix Container Detection")
 
         #debug
         if self.debug: self.showimg(outimg, "cons_per_color")

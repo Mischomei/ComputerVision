@@ -21,7 +21,7 @@ DEBUG = False
 #PathHandler
 handler = PathHandler.PathHandler()
 #testimage
-testimage = "image_20.jpg"
+testimage = "image_15.jpg"
 #ImageProcessor
 processor = ImageProcessor.ImageProcessor(debug=DEBUG)
 #ArucoDict
@@ -37,6 +37,15 @@ newercolors = [
     (np.array([31.0, int(255*0.25), int(255*0.3)]), np.array([39.0, int(255*0.65), int(255*0.85)]), "yellow"),
     (np.array([0.0, int(255*0.15), int(255*0.4)]), np.array([180.0, int(255*0.4), int(255*0.8)]), "pink")
 ]
+newercolors = [
+    (np.array([50.0, int(255*0.25), int(255*0.2)]), np.array([74.0, int(255*0.9), int(255*0.8)]), "green"),
+    #(np.array([100.0, int(255*0.04), int(255*0.19)]), np.array([115.0, int(255*0.2), int(255*0.39)]), "black"),
+    (np.array([[177.0, int(255*0.25), int(255*0.3)],[0.0, int(255*0.25), int(255*0.3)]]), np.array([[180.0, int(255*0.8), int(255*0.8)], [3.5, int(255*0.8), int(255*0.8)]]), "red"),
+    (np.array([85.5, int(255*0.1), int(255*0.3)]), np.array([97.0, int(255*0.55), int(255*0.8)]), "blue"),
+    (np.array([32.0, int(255*0.3), int(255*0.35)]), np.array([39.5, int(255*0.7), int(255*0.85)]), "yellow"),
+    (np.array([[174.0, int(255*0.1), int(255*0.35)], [0.0, int(255*0.1), int(255*0.35)]]), np.array([[180.0, int(255*0.45), int(255*0.85)], [2.0, int(255*0.45), int(255*0.85)]]), "pink")
+]
+
 
 def pi_stereo():
     pi1 = Camera.Camera(debug=DEBUG)
@@ -48,14 +57,14 @@ def pi_stereo():
     board = processor.create_charuco((9, 6), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
     board2 = processor.create_charuco((13, 7), 0.05, 0.04, cv.aruco.DICT_5X5_100, handler.SAVE_FOLDER)
     handler.set_calibration_images_folder("example_data/new_calibration_charuco")
-    pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, board2, cv.aruco.DICT_5X5_100)
-    pi2.calibrate_charuco(handler.CALIB_FOLDER / "calibration_right", board, board2, cv.aruco.DICT_5X5_100)
+    #pi1.calibrate_charuco(handler.CALIB_FOLDER / "calibration_left", board, board2, cv.aruco.DICT_5X5_100)
+    #pi2.calibrate_charuco(handler.CALIB_FOLDER / "calibration_right", board, board2, cv.aruco.DICT_5X5_100)
     #pi1.calibrate(handler.CALIB_FOLDER / "calibration_left", RESOLUTION, (13, 9))
     #pi2.calibrate(handler.CALIB_FOLDER / "calibration_right", RESOLUTION, (13, 9))
-    #pi1.save_settings(SETTINGS_FOLDER / "pi1")
-    #pi2.save_settings(SETTINGS_FOLDER / "pi2")
-    #pi1.load_settings(SETTINGS_FOLDER / "pi1")
-    #pi2.load_settings(SETTINGS_FOLDER / "pi2")
+    #pi1.save_settings(handler.SETTINGS_FOLDER / "pi1")
+    #pi2.save_settings(handler.SETTINGS_FOLDER / "pi2")
+    pi1.load_settings(handler.SETTINGS_FOLDER / "pi1")
+    pi2.load_settings(handler.SETTINGS_FOLDER / "pi2")
     picam = StereoCamera.StereoCamera(pi1, pi2, 0.05, 60.0)
     img_left = cv.imread(handler.IMAGE_FOLDER /"new_images_left" / testimage)
     img_right = cv.imread(handler.IMAGE_FOLDER / "new_images_right" / testimage)
@@ -63,9 +72,9 @@ def pi_stereo():
     #img_right = processor.rotate(processor.rotate(img_right))
 
 
-    picam.stereo_calibration_rectification(img_left.shape[:-1][::-1])
-    picam.save_map(handler.SETTINGS_FOLDER / "stereo")
-    #picam.read_map(handler.SETTINGS_FOLDER / "stereo")
+    #picam.stereo_calibration_rectification(img_left.shape[:-1][::-1])
+    #picam.save_map(handler.SETTINGS_FOLDER / "stereo")
+    picam.read_map(handler.SETTINGS_FOLDER / "stereo")
     stereoproc = StereoProcessor(debug=DEBUG)
     # Image undistortion Rectification
     undistorted_left, undistorted_right = stereoproc.undistort_rectify(img_left, img_right, picam)

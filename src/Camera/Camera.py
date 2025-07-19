@@ -17,7 +17,6 @@ class Camera:
     resolution = (0, 0) # Auflösung // Resolution
     cameraMatrix, dist, rvecs, tvecs = None, None, None ,None # Kameramatrix, Verzerrungsmatrix, Rotationsvektoren, Verschiebungsvektoren // Camera Matrix, Distortion Matrix, Rotation Vectors, Translation Vectors
     objPoints, imgPoints = None, None
-    newCameramatrix = None
 
     def __init__(self, data=None, debug=False):
         self.debug = debug
@@ -63,11 +62,8 @@ class Camera:
         height, width, channels = img.shape
         ret, cameraMatrix, dist, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, (width, height), None, None)
 
-        newCameramatrix, roi = cv.getOptimalNewCameraMatrix(cameraMatrix, dist, (width, height), 1, (width, height))
-        newCameramatrix = cameraMatrix
         if ret:
             self.cameraMatrix = cameraMatrix
-            self.newCameramatrix = newCameramatrix
             self.dist = dist
             self.rvecs = rvecs
             self.tvecs = tvecs
@@ -95,7 +91,6 @@ class Camera:
             data = json.load(json_file)
             self.f = data["f"]
             self.cameraMatrix = np.asarray(data["cameraMatrix"])
-            self.newCameramatrix = np.asarray(data["newCameramatrix"])
             self.dist = np.array(data["dist"])
             print(data)
         print("---Kamera Parameter geladen---")
@@ -105,7 +100,6 @@ class Camera:
         settings = {
             "f": self.f,
             "cameraMatrix": self.cameraMatrix.tolist(),
-            "newCameramatrix": self.newCameramatrix.tolist(),
             "dist": self.dist.tolist(),
         }
 
