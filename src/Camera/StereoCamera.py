@@ -68,6 +68,7 @@ class StereoCamera(Camera):
         self.stereomapR_x = cv_file.getNode("stereoMapR_x").mat()
         self.stereomapR_y = cv_file.getNode("stereoMapR_y").mat()
         cv_file.release()
+        print("---Stereo-Kalibrierung geladen---")
 
 
     def stereo_stream(self):

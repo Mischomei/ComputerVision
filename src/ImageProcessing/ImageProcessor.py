@@ -6,13 +6,15 @@ import numpy as np
 import imutils
 import os
 from pathlib import Path
+from skimage import exposure
 
 from numpy.f2py.auxfuncs import throw_error
+from skimage.exposure import match_histograms
 
 from src.extras.trigonometry import len_line
 from cv2 import aruco
 
-MASK_REP = 5
+MASK_REP = 10
 CAMERA_PARAM_REP = 5
 
 class ImageProcessor:
@@ -25,7 +27,7 @@ class ImageProcessor:
     def undistort(self, folder, image, camera, destFolder=None):
         img = cv.imread(folder / image)
         #debug
-        if self.debug:self.showimg(img, "img")
+        if self.debug:self.showimg(self.resized(img), "img")
         h,w = img.shape[:2]
 
         #Optimisierung der Kameramatrix passend zur Auflösung des Bildes
@@ -77,7 +79,7 @@ class ImageProcessor:
         combthresh = cv.bitwise_and(combthresh, combthresh, mask=invmask)
 
         #debug
-        if self.debug: self.showimg(combthresh, "combthresh")
+        if self.debug: self.showimg(self.sized(combthresh), "combthresh")
 
         return combthresh
 
@@ -175,13 +177,10 @@ class ImageProcessor:
         img_copy = img.copy()
         img_copy = cv.cvtColor(img_copy, cv.COLOR_BGR2HSV)
 
-
-
-
         if lower.shape == (3, ) and upper.shape == (3, ):
             mask = cv.inRange(img_copy, lower, upper)
-            mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
-            mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
+            #mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
+            #mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
         else:
             if len(lower) == len(upper):
                 masks = list()
@@ -189,12 +188,12 @@ class ImageProcessor:
                     tmp = cv.inRange(img_copy, lower[i], upper[i])
                     masks.append(tmp)
                 mask = cv.bitwise_or(*masks)
-                mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
-                mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
+                #mask = cv.threshold(mask, 2, 255, cv.THRESH_BINARY)[1]
+                #mask = cv.morphologyEx(mask, cv.MORPH_OPEN, None, iterations=2)
             else:
                 throw_error("Range of lower and upper must be equal")
 
-        if self.debug: self.showimg(mask, "created mask")
+        if self.debug: self.showimg(self.sized(mask), "created mask")
 
         return mask
 
@@ -207,7 +206,7 @@ class ImageProcessor:
         threshmask = cv.morphologyEx(threshmask, cv.MORPH_OPEN, (20, 20), iterations=2)
 
         #debug
-        if self.debug: self.showimg(threshmask, "threshmask")
+        if self.debug: self.showimg(self.sized(threshmask), "threshmask")
         return threshmask
 
 
@@ -218,7 +217,7 @@ class ImageProcessor:
         invmask = cv.bitwise_not(invmask)
 
         #debug
-        if self.debug: self.showimg(invmask, "invmask")
+        if self.debug: self.showimg(self.sized(invmask), "invmask")
         return invmask
 
     #Weiß noch nicht ob ich das brauche ???
@@ -280,7 +279,7 @@ class ImageProcessor:
                 print("Fix Container Detection")
 
         #debug
-        if self.debug: self.showimg(outimg, "cons_per_color")
+        if self.debug: self.showimg(self.sized(outimg), "cons_per_color")
 
         return outimg, outpoints
 
@@ -319,7 +318,7 @@ class ImageProcessor:
             cv.imwrite(dest / f"marker_{id}.jpg", img_marker)
             id+=1
             #debug
-            if self.debug: self.showimg(img_marker, "aruco_marker")
+            if self.debug: self.showimg(self.sized(img_marker), "aruco_marker")
 
 
     #Eigentlich unnötig, lasse ich vlt für noch irgendwas
@@ -420,5 +419,18 @@ class ImageProcessor:
         ratio = checkboardSize[1] / checkboardSize[0]
         return charboard
 
+    #Color Equalization using histogram matching
+    def histogram_matching(self, ref, src):
+
+        matched = match_histograms(src, ref, channel_axis=-1)
+        #Debug
+        if self.debug:
+            self.showimg(self.sized(ref), "Reference")
+            self.showimg(self.sized(src), "Source")
+            self.showimg(self.sized(matched), "Matched")
 
 
+        return matched
+
+    def sized(self, img, w=1800, h=1000):
+        return cv.resize(img.copy(), (w, h))
